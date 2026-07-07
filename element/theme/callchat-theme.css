@@ -1,0 +1,30 @@
+:root {
+  --callchat-bg: #03080b;
+  --callchat-panel: #071219;
+  --callchat-line: rgba(56, 230, 255, 0.26);
+  --callchat-cyan: #38e6ff;
+  --callchat-green: #18ffb0;
+  --callchat-text: #eef8ff;
+}
+
+body {
+  background:
+    linear-gradient(90deg, rgba(56, 230, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(56, 230, 255, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at top, rgba(56, 230, 255, 0.16), transparent 42%),
+    var(--callchat-bg);
+  background-size: 56px 56px, 56px 56px, auto, auto;
+  color: var(--callchat-text);
+}
+
+.mx_AuthPage_modal,
+.mx_Dialog,
+.mx_RoomView,
+.mx_LeftPanel {
+  border-color: var(--callchat-line) !important;
+}
+
+.mx_AccessibleButton_kind_primary {
+  background: linear-gradient(135deg, var(--callchat-green), var(--callchat-cyan)) !important;
+  color: #001013 !important;
+}

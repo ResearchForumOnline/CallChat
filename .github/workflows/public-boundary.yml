@@ -1,0 +1,42 @@
+name: Public boundary checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refuse obvious private paths
+        run: |
+          test ! -d zmath-private
+          test ! -d shield-private
+          test ! -d callchat-secrets
+          test ! -d backups
+
+      - name: Refuse obvious secret file names
+        run: |
+          ! find . -type f \( \
+            -name '*.signing.key' -o \
+            -name 'homeserver.yaml' -o \
+            -name '.env' -o \
+            -name '*accounts*.txt' -o \
+            -name '*password*' -o \
+            -name '*secret*' -o \
+            -name '*token*' \
+          \) | grep .
+
+      - name: Validate JSON examples
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('.').rglob('*.json'):
+              json.loads(path.read_text(encoding='utf-8'))
+              print(path)
+          PY

@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-synapse}
+      POSTGRES_USER: ${POSTGRES_USER:-synapse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - callchat-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-synapse} -d ${POSTGRES_DB:-synapse}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  synapse:
+    image: ghcr.io/element-hq/synapse:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SYNAPSE_SERVER_NAME: ${SERVER_NAME:?Set SERVER_NAME in .env}
+      SYNAPSE_REPORT_STATS: ${SYNAPSE_REPORT_STATS:-no}
+    volumes:
+      - synapse-data:/data
+      - synapse-media:/data/media_store
+    ports:
+      - "127.0.0.1:8008:8008"
+    networks:
+      - callchat-internal
+
+networks:
+  callchat-internal:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  synapse-data:
+  synapse-media:

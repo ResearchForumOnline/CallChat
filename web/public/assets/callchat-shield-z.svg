@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="CallChat shield Z logo">
+  <defs>
+    <linearGradient id="g" x1="18" y1="12" x2="110" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18ffb0"/>
+      <stop offset=".55" stop-color="#38e6ff"/>
+      <stop offset="1" stop-color="#6b7cff"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#031017"/>
+  <path d="M64 13l42 14v31c0 29-17 48-42 58-25-10-42-29-42-58V27l42-14z" fill="url(#g)" opacity=".92" filter="url(#glow)"/>
+  <path d="M64 23l31 10v25c0 22-12 37-31 46-19-9-31-24-31-46V33l31-10z" fill="#06121a" opacity=".88"/>
+  <path d="M45 43h41L60 79h28v13H39l26-36H45V43z" fill="#eaffff"/>
+</svg>

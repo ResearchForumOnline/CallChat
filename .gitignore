@@ -1,0 +1,60 @@
+.env
+.env.*
+!.env.example
+
+# Keys and certificates
+*.key
+*.pem
+*.crt
+*.csr
+*.p12
+*.pfx
+*.jks
+
+# Matrix/Synapse secrets
+homeserver.yaml
+*.signing.key
+registration_shared_secret*
+macaroon*
+matrix-accounts-*.txt
+*accounts*.txt
+*password*
+*secret*
+*token*
+
+# Local state and data
+*.sqlite
+*.db
+*.log
+*.bak
+*.old
+*.tmp
+media_store/
+uploads/
+postgres-data/
+synapse-data/
+callchat-secrets/
+secrets/
+private/
+backups/
+
+# Private commercial modules
+zmath-private/
+shield-private/
+premium/
+entitlement-private/
+
+# Build outputs and binary packages
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.exe
+*.apk
+*.ipa
