@@ -12,6 +12,18 @@ This guide describes a public CallChat Community deployment. Replace `example.co
 - SMTP provider if you enable email flows.
 - TURN/coturn server for reliable voice/video calls.
 
+## Fast Path
+
+```bash
+git clone https://github.com/ResearchForumOnline/CallChat.git
+cd CallChat
+bash install.sh
+bash scripts/callchatctl.sh install-element
+bash scripts/callchatctl.sh start-stack
+```
+
+The wizard generates local config. Review everything before exposing the service publicly.
+
 ## Domain Model
 
 Recommended:
@@ -35,6 +47,26 @@ For a very small deployment, you can reverse proxy Matrix under the public domai
 10. Keep registration closed until moderation and anti-abuse are ready.
 11. Configure TURN/coturn for calls.
 12. Test Element login from mobile and desktop.
+
+## Optional OpenZero
+
+Install OpenZero after Matrix login works:
+
+```bash
+bash scripts/callchatctl.sh install-openzero
+```
+
+Keep OpenZero admin surfaces private. Expose only a narrow, rate-limited bridge to public widgets or Matrix bots.
+
+## Optional Website Widget
+
+Add the CallChat Zero Agent widget to an existing site:
+
+```bash
+bash scripts/callchatctl.sh install-widget /var/www/example.com/public
+```
+
+The command backs up the webroot first.
 
 ## Critical Warning
 

@@ -26,6 +26,7 @@ $publicHost = 'example.com';
       <a href="/connect/">Connect</a>
       <a href="/downloads/">Downloads</a>
       <a href="/#shield">Shield</a>
+      <a href="https://github.com/ResearchForumOnline/CallChat" rel="noopener">GitHub</a>
       <a href="/privacy.php">Privacy</a>
     </nav>
   </header>
@@ -39,6 +40,7 @@ $publicHost = 'example.com';
         <div class="actions">
           <a class="primary" href="/connect/">Connect with Element</a>
           <a href="/downloads/">Download setup files</a>
+          <a href="https://github.com/ResearchForumOnline/CallChat" rel="noopener">Open GitHub repo</a>
           <a href="#shield">Shield boundary</a>
         </div>
       </div>

@@ -1,0 +1,32 @@
+services:
+  postgres:
+    extends:
+      file: ../synapse/docker-compose.yml
+      service: postgres
+
+  synapse:
+    extends:
+      file: ../synapse/docker-compose.yml
+      service: synapse
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  element-web:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ../../runtime/element-web:/usr/share/nginx/html:ro
+    ports:
+      - "127.0.0.1:8088:80"
+    profiles:
+      - element
+
+networks:
+  callchat-internal:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  synapse-data:
+  synapse-media:

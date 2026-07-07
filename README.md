@@ -10,10 +10,13 @@ Self-hosted Matrix chat with a CallChat front door, a branded Element Web profil
 - Synapse + PostgreSQL Docker templates.
 - Apache and Nginx reverse proxy examples.
 - Matrix `.well-known` discovery examples.
-- Element Web configuration and CallChat theme hooks.
+- Element Web download/configuration and CallChat theme hooks.
 - A PHP/HTML/CSS/JS landing page that works on Apache/CWP style hosting.
+- A CLI installer for one-server deployments.
+- A small PHP setup UI that generates safe configs without needing Node, Python, or a database.
+- A website widget that can be copied into an existing site and pointed at an approved AI/agent endpoint.
 - Scripts for health checks, backups, and release packaging.
-- Docs for DNS, installation, admin tasks, Element setup, TURN calls, updates, and public safety boundaries.
+- Docs for DNS, installation, admin tasks, Element setup, TURN calls, OpenZero, updates, and public safety boundaries.
 - Optional AI bot integration notes for OpenZero-style local agents.
 
 ## What This Repo Does Not Include
@@ -44,6 +47,18 @@ CallChat Community keeps the proven Matrix stack and wraps it in a CallChat depl
 - Optional Zero Bot: a consent-based Matrix bot that can connect to OpenZero or another local LLM bridge.
 
 ## Quick Start
+
+Fast operator path:
+
+```bash
+git clone https://github.com/ResearchForumOnline/CallChat.git
+cd CallChat
+bash install.sh
+```
+
+The wizard writes local config files only. It does not expose secrets or change your web server without you running the deploy step.
+
+Manual path:
 
 1. Copy `.env.example`:
 
@@ -76,6 +91,20 @@ CallChat Community keeps the proven Matrix stack and wraps it in a CallChat depl
 
 Read [docs/install.md](docs/install.md) before production use.
 
+## Install Modes
+
+| Mode | Command | What it does |
+| --- | --- | --- |
+| Wizard | `bash install.sh` | Interactive domain/config builder. |
+| Stack | `bash scripts/callchatctl.sh start-stack` | Starts Synapse/PostgreSQL Docker compose. |
+| Element Web | `bash scripts/callchatctl.sh install-element` | Downloads Element Web and writes CallChat config. |
+| OpenZero | `bash scripts/callchatctl.sh install-openzero` | Runs the public OpenZero installer hook. |
+| Website widget | `bash scripts/callchatctl.sh install-widget /var/www/site/public` | Adds the CallChat agent widget to an existing site with a backup. |
+| Agent bridge | `python3 ai/zero_agent_bridge.py` | Example rate-limited widget backend for OpenZero/fallback answers. |
+| Status | `bash scripts/callchatctl.sh status` | Checks Matrix discovery/API and optional widget files. |
+
+See [docs/cli-installer.md](docs/cli-installer.md).
+
 ## Element Compatibility
 
 CallChat does not replace the Matrix protocol. It gives a CallChat-branded route into it.
@@ -88,6 +117,12 @@ Users can connect with:
 - Future CallChat-native clients.
 
 For security and licensing hygiene, this repo configures and themes upstream Element Web instead of hiding upstream code inside CallChat.
+
+## OpenZero Integration
+
+OpenZero can power a CallChat room bot, public site widget, and local voice/AI bridge. This repo does not copy OpenZero internals; it installs or links to the official OpenZero project so updates and license boundaries remain clear.
+
+Read [docs/openzero-integration.md](docs/openzero-integration.md).
 
 ## Update Policy
 

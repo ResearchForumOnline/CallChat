@@ -47,9 +47,12 @@ entitlement-private/
 # Build outputs and binary packages
 node_modules/
 vendor/
+__pycache__/
+*.pyc
 dist/
 build/
 coverage/
+runtime/
 *.zip
 *.tar
 *.tar.gz

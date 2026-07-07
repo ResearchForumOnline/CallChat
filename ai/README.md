@@ -25,3 +25,15 @@ POST http://127.0.0.1:11434/v1/chat/completions
 ```
 
 Use your own endpoint and model. Keep API keys and bot tokens out of this repo.
+
+## Website Agent Bridge
+
+This repo includes a small dependency-free example:
+
+- `ai/zero_agent_bridge.py`
+- `ai/zero-agent-bridge.example.env`
+- `infra/systemd/callchat-zero-agent.service`
+
+It accepts widget messages, rate limits visitors, checks allowed origins, and forwards approved prompts to an OpenZero-compatible `/v1/chat/completions` endpoint when an API key is configured. Without an API key it returns safe product fallback answers.
+
+Do not expose the OpenZero Super Panel publicly. Expose only this narrow bridge or a stronger production gateway.

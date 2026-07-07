@@ -1,0 +1,107 @@
+.callchat-zero-agent-widget {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 99999;
+  width: min(360px, calc(100vw - 28px));
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #edf8ff;
+}
+
+.callchat-zero-agent-widget button {
+  font: inherit;
+}
+
+.callchat-zero-agent-launcher {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(56, 230, 255, 0.36);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #18ffb0, #38e6ff 55%, #6b7cff);
+  color: #001013;
+  font-weight: 900;
+  box-shadow: 0 16px 44px rgba(56, 230, 255, 0.28);
+  cursor: pointer;
+}
+
+.callchat-zero-agent-panel {
+  display: none;
+  margin-bottom: 12px;
+  border: 1px solid rgba(56, 230, 255, 0.28);
+  border-radius: 18px;
+  background: rgba(4, 12, 16, 0.94);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+}
+
+.callchat-zero-agent-widget[data-open="true"] .callchat-zero-agent-panel {
+  display: block;
+}
+
+.callchat-zero-agent-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(56, 230, 255, 0.18);
+}
+
+.callchat-zero-agent-head strong {
+  display: block;
+}
+
+.callchat-zero-agent-head span {
+  color: #a9c2cf;
+  font-size: 0.88rem;
+}
+
+.callchat-zero-agent-log {
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 14px;
+}
+
+.callchat-zero-agent-msg {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d9edf6;
+  line-height: 1.45;
+}
+
+.callchat-zero-agent-msg.user {
+  background: rgba(56, 230, 255, 0.14);
+  color: #f4fdff;
+}
+
+.callchat-zero-agent-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(56, 230, 255, 0.18);
+}
+
+.callchat-zero-agent-form input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid rgba(56, 230, 255, 0.22);
+  border-radius: 12px;
+  background: #071219;
+  color: #edf8ff;
+  padding: 10px 12px;
+}
+
+.callchat-zero-agent-form button {
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #18ffb0, #38e6ff);
+  color: #001013;
+  font-weight: 900;
+  padding: 10px 14px;
+  cursor: pointer;
+}
