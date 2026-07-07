@@ -2,7 +2,16 @@
 
 Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, voice/video notes, and a clean public boundary for optional premium Shield features.
 
-![CallChat preview](https://callchat.org/assets/images/callchat-og-20260707.webp)
+<p align="center">
+  <img src="docs/images/callchat-community-hero.svg" alt="CallChat Community self-hosted Matrix server kit" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://callchat.org/"><img alt="Website" src="https://img.shields.io/badge/website-callchat.org-38e6ff?style=for-the-badge"></a>
+  <a href="https://github.com/ResearchForumOnline/CallChat/releases/tag/v0.2.0"><img alt="Release" src="https://img.shields.io/badge/release-v0.2.0-18ffb0?style=for-the-badge"></a>
+  <a href="docs/install.md"><img alt="Install" src="https://img.shields.io/badge/install-bash_install.sh-f6d365?style=for-the-badge"></a>
+  <a href="docs/openzero-integration.md"><img alt="OpenZero" src="https://img.shields.io/badge/OpenZero-agent_bridge-8b5cf6?style=for-the-badge"></a>
+</p>
 
 ## What This Repo Gives You
 

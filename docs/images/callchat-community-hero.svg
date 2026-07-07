@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">CallChat Community self-hosted Matrix messenger</title>
+  <desc id="desc">Dark CallChat console interface with Matrix rooms, Synapse, Element Web, OpenZero, and Shield boundary notes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#02090c"/>
+      <stop offset=".52" stop-color="#06161c"/>
+      <stop offset="1" stop-color="#03100d"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#18ffb0"/>
+      <stop offset=".55" stop-color="#38e6ff"/>
+      <stop offset="1" stop-color="#6b7cff"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0v48" fill="none" stroke="#38e6ff" stroke-opacity=".08"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+  <g opacity=".25" font-family="Consolas, monospace" font-size="18" fill="#38e6ff">
+    <text x="28" y="70">0 +0 -0 Z MATRIX SYNAPSE ELEMENT OPENZERO</text>
+    <text x="820" y="112">CALLCHAT ZERO SECURE ROOMS</text>
+    <text x="94" y="575">LOCAL FIRST / SELF HOST / MATRIX COMPATIBLE</text>
+  </g>
+  <g transform="translate(80 74)">
+    <text x="0" y="0" fill="#8df7ff" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="6">SELF-HOSTED MATRIX SERVER KIT</text>
+    <text x="0" y="86" fill="#f4fbff" font-family="Arial, sans-serif" font-size="86" font-weight="900">Call<tspan fill="#38e6ff">Chat</tspan></text>
+    <text x="4" y="145" fill="#79eaff" font-family="Arial, sans-serif" font-size="44" font-weight="900" letter-spacing="22">COMMUNITY</text>
+    <text x="0" y="198" fill="#b9d1dc" font-family="Arial, sans-serif" font-size="24">Synapse + PostgreSQL + Element Web + OpenZero hooks</text>
+  </g>
+  <g transform="translate(86 332)">
+    <rect width="284" height="72" rx="16" fill="#071821" stroke="#38e6ff" stroke-opacity=".45"/>
+    <text x="24" y="44" fill="#18ffb0" font-family="Arial, sans-serif" font-size="22" font-weight="800">bash install.sh</text>
+    <rect x="312" width="284" height="72" rx="16" fill="#071821" stroke="#38e6ff" stroke-opacity=".45"/>
+    <text x="336" y="44" fill="#f4fbff" font-family="Arial, sans-serif" font-size="22" font-weight="800">Element-ready</text>
+    <rect x="624" width="284" height="72" rx="16" fill="#071821" stroke="#38e6ff" stroke-opacity=".45"/>
+    <text x="648" y="44" fill="#f4fbff" font-family="Arial, sans-serif" font-size="22" font-weight="800">OpenZero bridge</text>
+  </g>
+  <g transform="translate(666 166)">
+    <rect width="506" height="350" rx="28" fill="#041018" stroke="#38e6ff" stroke-opacity=".75" filter="url(#glow)"/>
+    <rect x="0" y="62" width="506" height="1" fill="#38e6ff" opacity=".32"/>
+    <rect x="142" y="62" width="1" height="288" fill="#38e6ff" opacity=".18"/>
+    <rect x="372" y="62" width="1" height="288" fill="#38e6ff" opacity=".18"/>
+    <text x="28" y="40" fill="#38e6ff" font-family="Arial, sans-serif" font-size="26" font-weight="900">CallChat</text>
+    <circle cx="38" cy="112" r="18" fill="url(#cyan)"/>
+    <text x="70" y="105" fill="#f4fbff" font-family="Arial, sans-serif" font-size="19" font-weight="800">Matrix Talk</text>
+    <text x="70" y="130" fill="#9fb8c5" font-family="Arial, sans-serif" font-size="15">General discussion</text>
+    <circle cx="38" cy="172" r="18" fill="#7c5cff"/>
+    <text x="70" y="165" fill="#f4fbff" font-family="Arial, sans-serif" font-size="19" font-weight="800">Zero Bot</text>
+    <text x="70" y="190" fill="#9fb8c5" font-family="Arial, sans-serif" font-size="15">OpenZero ready</text>
+    <circle cx="38" cy="232" r="18" fill="#20d986"/>
+    <text x="70" y="225" fill="#f4fbff" font-family="Arial, sans-serif" font-size="19" font-weight="800">Shield File</text>
+    <text x="70" y="250" fill="#9fb8c5" font-family="Arial, sans-serif" font-size="15">Boundary only</text>
+    <rect x="166" y="94" width="180" height="46" rx="14" fill="#101b24" stroke="#ffffff" stroke-opacity=".08"/>
+    <text x="184" y="124" fill="#f4fbff" font-family="Arial, sans-serif" font-size="17">Welcome to CallChat</text>
+    <rect x="166" y="164" width="150" height="46" rx="14" fill="#101b24" stroke="#ffffff" stroke-opacity=".08"/>
+    <text x="184" y="194" fill="#f4fbff" font-family="Arial, sans-serif" font-size="17">Rooms are live</text>
+    <rect x="166" y="238" width="182" height="56" rx="14" fill="#062a2d" stroke="#38e6ff" stroke-opacity=".55"/>
+    <text x="184" y="270" fill="#f4fbff" font-family="Arial, sans-serif" font-size="17">architecture.zme1</text>
+    <circle cx="438" cy="132" r="48" fill="#062a2d" stroke="#38e6ff" stroke-opacity=".65"/>
+    <path d="M438 92l34 12v26c0 26-15 44-34 52-19-8-34-26-34-52v-26z" fill="url(#cyan)" opacity=".85"/>
+    <text x="417" y="145" fill="#051014" font-family="Arial, sans-serif" font-size="44" font-weight="900">Z</text>
+    <text x="402" y="236" fill="#f4fbff" font-family="Arial, sans-serif" font-size="18" font-weight="800">Matrix</text>
+    <text x="402" y="263" fill="#18ffb0" font-family="Arial, sans-serif" font-size="18" font-weight="800">Synapse</text>
+    <text x="402" y="290" fill="#38e6ff" font-family="Arial, sans-serif" font-size="18" font-weight="800">Element</text>
+  </g>
+</svg>
