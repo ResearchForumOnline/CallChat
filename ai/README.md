@@ -47,3 +47,21 @@ This repo includes a small dependency-free example:
 It accepts widget messages, rate limits visitors, checks allowed origins, and forwards approved prompts to an OpenZero-compatible `/v1/chat/completions` endpoint when an API key is configured. Without an API key it returns safe product fallback answers.
 
 Do not expose the OpenZero Super Panel publicly. Expose only this narrow bridge or a stronger production gateway.
+
+## Production Gateway Notes
+
+For deployed public agents, keep the endpoint tolerant of both selector fields:
+
+- `model`, for OpenAI-compatible clients and newer widgets.
+- `agent`, for small website widgets or legacy callers.
+
+The gateway should normalize either field before routing, then keep common buyer questions on a fast deterministic path. Q Call pricing, Element setup, secure messaging basics, research/product routing, and lead-capture examples should not wait on a cold or busy local model before answering.
+
+Recommended production guardrails:
+
+- Keep per-site agent facts in a config file, not hard-coded into every deploy.
+- Run the public bridge as a dedicated non-root service user.
+- Reject oversized JSON bodies with `413 Payload Too Large` rather than truncating them.
+- Record metadata-only health counters such as site, route, model, latency, and rejected request reason. Do not log visitor prompts or secrets.
+- Keep a smoke test suite for hard facts, banned repeated phrases, CORS, selector compatibility, and payload-size behaviour.
+- Bump the widget asset version and service-worker cache name whenever browser-side fallback wording changes.
