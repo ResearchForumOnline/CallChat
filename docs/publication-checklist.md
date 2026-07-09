@@ -17,6 +17,7 @@ Use this checklist before publishing or updating the public CallChat repository.
 - Matrix/Synapse/Element-compatible architecture at a high level.
 - Public security policy and abuse-reporting routes.
 - Shield behaviour and licensing summaries.
+- Q Call pricing copy, buyer profiles, and links to the live buy/capture page.
 - Roadmap items that do not reveal implementation details.
 - Links to the live website, manuals, pricing, and official app/client setup.
 

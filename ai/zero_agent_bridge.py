@@ -26,7 +26,7 @@ ALLOWED_ORIGINS = {x.strip() for x in os.getenv("ALLOWED_ORIGINS", "").split(","
 DAILY_LIMIT = int(os.getenv("ZERO_AGENT_DAILY_LIMIT", "40"))
 SITE_CONTEXT = os.getenv(
     "SITE_CONTEXT",
-    "CallChat Community helps people self-host Matrix/Synapse/Element with optional OpenZero AI support.",
+    "CallChat Community helps people self-host Matrix/Synapse/Element with optional OpenZero AI support. Q Call secure-comms licenses are USD 55/month or USD 550/year for unlimited users on one approved public server IP.",
 )
 
 WINDOW_SECONDS = 24 * 60 * 60
@@ -58,8 +58,10 @@ def fallback_reply(message: str) -> str:
     if "call" in lower or "video" in lower or "voice" in lower:
         return "Voice and video need TURN/coturn for reliability across mobile networks, home routers, and stricter office networks."
     if "shield" in lower or "zmath" in lower:
-        return "Shield is an optional premium vault layer. This public kit documents the safe boundary without publishing private implementation code."
-    return "CallChat Community is a self-host kit for Matrix/Synapse/Element with CallChat branding, optional OpenZero AI, and a clean private boundary for premium Shield features."
+        return "Shield is an optional premium vault layer for protected workflows. The Q Call secure-comms license is USD 55/month or USD 550/year for unlimited users on one approved public server IP. Start at https://callchat.org/license/."
+    if "price" in lower or "pricing" in lower or "license" in lower or "buy" in lower or "cost" in lower or "q call" in lower:
+        return "Q Call secure comms is licensed at USD 55/month or USD 550/year for unlimited users on one approved public server IP. The live buy and capture page is https://callchat.org/license/."
+    return "CallChat Community is a self-host kit for Matrix/Synapse/Element with CallChat branding, optional OpenZero AI, and a clean private boundary for premium Shield features. If you need secure comms for a team, Q Call is USD 55/month or USD 550/year at https://callchat.org/license/."
 
 
 def ask_openzero(message: str) -> str | None:
@@ -72,8 +74,10 @@ def ask_openzero(message: str) -> str | None:
             {
                 "role": "system",
                 "content": (
-                    "You are CallChat Zero, a concise site assistant. "
-                    "Help users understand CallChat, Matrix/Synapse/Element setup, OpenZero, voice/video, and safe Shield boundaries. "
+                    "You are CallChat Zero, a concise site sales and support assistant. "
+                    "Help users understand CallChat, Matrix/Synapse/Element setup, OpenZero, voice/video, Q Call licensing, and safe Shield boundaries. "
+                    "When visitors show buying intent, qualify their use case and route them to https://callchat.org/license/. "
+                    "State that Q Call secure-comms licenses are USD 55/month or USD 550/year for unlimited users on one approved public server IP. "
                     "Do not ask for passwords, tokens, private keys, or recovery phrases. "
                     f"Site context: {SITE_CONTEXT}"
                 ),

@@ -6,6 +6,16 @@ This is not legal advice. It is an engineering guide to avoid obvious mistakes.
 
 Files written for this repository are MIT licensed unless a file says otherwise.
 
+## Q Call Commercial License
+
+The live Q Call secure-comms offer is sold separately from the MIT community kit:
+
+- USD $55/month or USD $550/year.
+- Unlimited users on one approved public server IP.
+- Live buy/capture route: https://callchat.org/license/
+
+The public repository can document pricing, buyer flow, and safe integration boundaries. A Q Call or Shield license does not automatically grant permission to republish private Shield/ZMath source, entitlement code, customer data, payment secrets, or production credentials.
+
 ## Upstream Software
 
 Synapse, Element Web, Matrix SDKs, Docker images, and other dependencies keep their own licenses. Always read the license for the specific version you deploy.
@@ -24,6 +34,7 @@ Synapse, Element Web, Matrix SDKs, Docker images, and other dependencies keep th
 - Removing upstream notices.
 - Mixing private commercial code directly into AGPL/copyleft code without review.
 - Publishing private Shield/ZMath implementation by accident.
+- Publishing payment provider secrets, webhook secrets, or customer lead data by accident.
 
 ## Practical Rule
 

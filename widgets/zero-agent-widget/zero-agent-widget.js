@@ -5,7 +5,7 @@
   const config = Object.assign({
     endpoint: '/api/zero-agent',
     brand: 'CallChat Zero',
-    prompt: 'Ask about setup, Element, Matrix, OpenZero, calls, or Shield.',
+    prompt: 'Ask about Q Call licenses, secure comms, setup, calls, or Shield.',
     maxChars: 900
   }, window.CallChatZeroAgent || {});
 
@@ -37,7 +37,7 @@
   launcher.addEventListener('click', () => root.setAttribute('data-open', root.getAttribute('data-open') !== 'true'));
   close.addEventListener('click', () => root.setAttribute('data-open', 'false'));
 
-  addMessage('agent', 'Hello. I can help you set up CallChat, Matrix/Synapse, Element, OpenZero, calls, and safe Shield boundaries.');
+  addMessage('agent', 'Hello. I can help you choose Q Call secure comms, understand the USD 55/month or USD 550/year license, and set up CallChat safely.');
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

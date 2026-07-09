@@ -42,3 +42,9 @@ Avoid fake or unverifiable claims. Do not claim "quantum encryption" unless a re
 A self-hosted Shield license allows use on one licensed deployment. It does not grant permission to republish premium source unless a separate written license says so.
 
 This repo can include stubs and docs that show where Shield hooks would appear, but it must not include the private implementation.
+
+## Q Call Offer Boundary
+
+The public Q Call offer is USD $55/month or USD $550/year for unlimited users on one approved public server IP. Public pages may link to https://callchat.org/license/ and describe buyer outcomes, setup flow, and safe integration points.
+
+Do not publish entitlement checks, payment secrets, customer lead data, private deployment scripts, or Shield/ZMath implementation details.

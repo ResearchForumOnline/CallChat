@@ -8,8 +8,8 @@ $publicHost = 'example.com';
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?php echo htmlspecialchars($brand); ?> - Matrix chat server kit</title>
-  <meta name="description" content="Self-host a CallChat-style Matrix chat server with Synapse, PostgreSQL, Element Web configuration, voice/video notes, and a clean Shield boundary.">
+  <title><?php echo htmlspecialchars($brand); ?> - Q Call secure comms</title>
+  <meta name="description" content="Get Q Call secure comms for USD 55/month or USD 550/year, with self-hosted Matrix chat, calls, Element Web configuration, OpenZero agent support, and a clean Shield boundary.">
   <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
@@ -25,6 +25,7 @@ $publicHost = 'example.com';
     <nav aria-label="Main navigation">
       <a href="/connect/">Connect</a>
       <a href="/downloads/">Downloads</a>
+      <a href="/license/">Q Call License</a>
       <a href="/#shield">Shield</a>
       <a href="https://github.com/ResearchForumOnline/CallChat" rel="noopener">GitHub</a>
       <a href="/privacy.php">Privacy</a>
@@ -34,14 +35,15 @@ $publicHost = 'example.com';
   <main>
     <section class="hero">
       <div>
-        <p class="eyebrow">Self-hosted secure messaging</p>
-        <h1>Run your own CallChat-style Matrix server.</h1>
-        <p class="lead">Synapse, PostgreSQL, Element Web, voice/video guidance, and a branded public front door that stays compatible with the Matrix ecosystem.</p>
+        <p class="eyebrow">Secure comms with Q Call</p>
+        <h1>Get privacy and protection in the quantum age.</h1>
+        <p class="lead">Q Call gives teams a self-hosted CallChat route for messages, rooms, calls, and protected workflows. Licenses are USD 55/month or USD 550/year for unlimited users on one approved public server IP.</p>
         <div class="actions">
-          <a class="primary" href="/connect/">Connect with Element</a>
+          <a class="primary" href="/license/">Get your license now</a>
+          <a href="https://callchat.org/license/#buy" rel="noopener">Buy on callchat.org</a>
+          <a href="/connect/">Connect with Element</a>
           <a href="/downloads/">Download setup files</a>
           <a href="https://github.com/ResearchForumOnline/CallChat" rel="noopener">Open GitHub repo</a>
-          <a href="#shield">Shield boundary</a>
         </div>
       </div>
       <aside class="console-card" aria-label="Homeserver summary">
@@ -56,6 +58,8 @@ $publicHost = 'example.com';
           <dd>Invite or admin controlled</dd>
           <dt>Calls</dt>
           <dd>TURN recommended</dd>
+          <dt>Q Call license</dt>
+          <dd>USD 55/mo or USD 550/yr</dd>
         </dl>
       </aside>
     </section>
@@ -63,23 +67,24 @@ $publicHost = 'example.com';
     <section class="grid">
       <article>
         <span>01</span>
-        <h2>Free Matrix chat</h2>
-        <p>Direct messages, group rooms, media upload, device verification, and Matrix client compatibility stay at the core.</p>
+        <h2>Know</h2>
+        <p>Self-host messages, rooms, media, and calls on a Matrix-compatible foundation with a CallChat front door.</p>
       </article>
       <article>
         <span>02</span>
-        <h2>Element-ready</h2>
-        <p>Use hosted Element Web or official Element mobile/desktop apps with the homeserver you control.</p>
+        <h2>Like</h2>
+        <p>Simple pricing, unlimited users on one approved public server IP, and a practical route for teams that want control.</p>
       </article>
       <article>
         <span>03</span>
-        <h2>Voice/video path</h2>
-        <p>Plan TURN relay early so calls work across home routers, mobile networks, and stricter office networks.</p>
+        <h2>Trust</h2>
+        <p>Security language stays serious: quantum-ready roadmap, private Shield boundary, and no impossible promises.</p>
       </article>
       <article id="shield">
         <span>04</span>
-        <h2>Shield boundary</h2>
-        <p>Optional premium Shield behaviour can be described safely without publishing proprietary cryptographic implementation code.</p>
+        <h2>Buy</h2>
+        <p>Use the live capture page to request setup help or buy the Q Call secure-comms license.</p>
+        <p><a href="https://callchat.org/license/#buy" rel="noopener">Open buy page</a></p>
       </article>
     </section>
   </main>

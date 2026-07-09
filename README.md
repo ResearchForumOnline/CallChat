@@ -1,6 +1,6 @@
 # CallChat Community
 
-Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, voice/video notes, and a clean public boundary for optional premium Shield features.
+Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, voice/video notes, Q Call secure-comms sales assets, and a clean public boundary for optional premium Shield features.
 
 <p align="center">
   <img src="docs/images/callchat-community-hero.svg" alt="CallChat Community self-hosted Matrix server kit" width="100%">
@@ -8,10 +8,23 @@ Self-hosted Matrix chat with a CallChat front door, a branded Element Web profil
 
 <p align="center">
   <a href="https://callchat.org/"><img alt="Website" src="https://img.shields.io/badge/website-callchat.org-38e6ff?style=for-the-badge"></a>
+  <a href="https://callchat.org/license/"><img alt="Q Call License" src="https://img.shields.io/badge/Q%20Call-license%20%2455%2Fmo%20or%20%24550%2Fyr-18ffb0?style=for-the-badge"></a>
   <a href="https://github.com/ResearchForumOnline/CallChat/releases/tag/v0.2.0"><img alt="Release" src="https://img.shields.io/badge/release-v0.2.0-18ffb0?style=for-the-badge"></a>
   <a href="docs/install.md"><img alt="Install" src="https://img.shields.io/badge/install-bash_install.sh-f6d365?style=for-the-badge"></a>
   <a href="docs/openzero-integration.md"><img alt="OpenZero" src="https://img.shields.io/badge/OpenZero-agent_bridge-8b5cf6?style=for-the-badge"></a>
 </p>
+
+## Q Call Secure Comms License
+
+Q Call is the commercial CallChat secure-communications offer for teams that want privacy and protection in the quantum age without publishing private Shield/ZMath implementation code.
+
+- Live license page: [callchat.org/license](https://callchat.org/license/)
+- Pricing: USD $55 per month or USD $550 per year.
+- Scope: unlimited users on one approved public server IP per license.
+- Buyer path: live capture page, direct buy button, and follow-up route for setup questions.
+- Positioning: quantum-ready secure communications with a PQC-ready roadmap, careful security wording, and a private implementation boundary.
+
+See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for the buyer profile, sales flow, claim wording, and public/private boundary.
 
 ## What This Repo Gives You
 
@@ -21,6 +34,7 @@ Self-hosted Matrix chat with a CallChat front door, a branded Element Web profil
 - Matrix `.well-known` discovery examples.
 - Element Web download/configuration and CallChat theme hooks.
 - A PHP/HTML/CSS/JS landing page that works on Apache/CWP style hosting.
+- Q Call license landing-page copy and safe buy/capture links for the live offer.
 - A CLI installer for one-server deployments.
 - A small PHP setup UI that generates safe configs without needing Node, Python, or a database.
 - A website widget that can be copied into an existing site and pointed at an approved AI/agent endpoint.
@@ -155,6 +169,8 @@ CallChat Shield / ZMath is an optional premium vault layer for protected files a
 - What clients should show when a Shield file is present.
 
 It does not publish the proprietary implementation. See [docs/zmath-boundary.md](docs/zmath-boundary.md).
+
+The current public offer is the Q Call secure-comms license: USD $55/month or USD $550/year for unlimited users on one approved public server IP. The public repo can describe the offer, customer flow, and safe integration points; private entitlement logic and Shield/ZMath implementation stay outside GitHub.
 
 ## License
 
