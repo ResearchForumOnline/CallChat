@@ -49,3 +49,5 @@ Expected response:
 ```
 
 Keep the backend rate limited and locked to approved sites. Common product, pricing, Element setup, and lead-capture questions should have deterministic fast fallback answers so the widget stays useful even if a local model is cold, busy, or unavailable.
+
+When updating the browser widget, bump the script query string and the service-worker cache name together. Otherwise returning visitors may keep an old fallback table even after the backend has been fixed.
