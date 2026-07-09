@@ -33,10 +33,19 @@ Content-Type: application/json
 {"message":"How do I connect Element?","source":"example.com"}
 ```
 
+Production gateways may also accept a site-agent selector in either `model` or `agent` so older and newer widgets do not accidentally bypass the intended public-agent route:
+
+```json
+{
+  "model": "callchat-site-agent",
+  "message": "What is the Q Call license price?"
+}
+```
+
 Expected response:
 
 ```json
 {"reply":"Install Element, choose custom homeserver, and enter example.com."}
 ```
 
-Keep the backend rate limited and locked to approved sites.
+Keep the backend rate limited and locked to approved sites. Common product, pricing, Element setup, and lead-capture questions should have deterministic fast fallback answers so the widget stays useful even if a local model is cold, busy, or unavailable.
