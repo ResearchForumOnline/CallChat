@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 
-import {openContainerPayload, protectPayload} from "./zshield-core.js";
+import {
+  containerFingerprint,
+  decodeMessageContainer,
+  openContainerPayload,
+  openMessage,
+  protectMessage,
+  protectPayload
+} from "./zshield-core.js";
 
 const passphrase = "Correct-Horse-Battery-2026";
 const pattern = new TextEncoder().encode("local-pattern-factor");
@@ -67,4 +74,23 @@ const vectorOpened = await openContainerPayload({
 });
 assert.equal(Buffer.from(vectorOpened.bytes).toString("base64"), vector.plaintextBase64);
 
-console.log("ZShield ZME1 round-trip, tamper, factor and resource-bound tests: ok");
+const shieldedMessage = await protectMessage({
+  message: "A private Matrix message with a real ZShield layer.",
+  passphrase,
+  patternBytes: pattern,
+  createdAt: "2026-07-10T00:00:00Z"
+});
+assert.match(shieldedMessage.envelope, /^ZSHIELD1:/);
+assert.equal(decodeMessageContainer(shieldedMessage.envelope).header.context.purpose, "matrix-message");
+assert.equal(decodeMessageContainer(shieldedMessage.envelope).header.context.zmathPolicy, "ZMath-Shield-Policy-1");
+const openedMessage = await openMessage({envelope: shieldedMessage.envelope, passphrase, patternBytes: pattern});
+assert.equal(openedMessage.message, "A private Matrix message with a real ZShield layer.");
+assert.match(await containerFingerprint(shieldedMessage.container), /^[a-f0-9]{24}$/);
+
+const alteredEnvelope = shieldedMessage.envelope.slice(0, -2) + "AA";
+await assert.rejects(
+  openMessage({envelope: alteredEnvelope, passphrase, patternBytes: pattern}),
+  /malformed|Authentication failed/
+);
+
+console.log("ZShield file and message round-trip, tamper, factor and resource-bound tests: ok");
