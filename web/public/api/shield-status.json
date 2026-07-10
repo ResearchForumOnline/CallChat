@@ -1,0 +1,38 @@
+{
+  "service": "CallChat Shield",
+  "domain": "callchat.org",
+  "offer_name": "Self-hosted ZMath Shield / Q Call secure-comms license",
+  "standard_matrix_chat": {
+    "status": "free",
+    "description": "Standard Matrix-compatible messaging stays free on CallChat."
+  },
+  "hosted_callchat_shield": {
+    "status": "working_local_mvp",
+    "price_usd_month": 0,
+    "scope": "Active hosted callchat.org accounts",
+    "user_experience": "Users deliberately protect a file or vault note locally with a passphrase and optional pattern file, then attach only the authenticated ZME1 container.",
+    "workspace": "https://callchat.org/shield/app/",
+    "public_boundary": "The working MVP uses reviewable standard Web Crypto primitives. Premium policy, managed recovery, and private ZMath research remain separate."
+  },
+  "self_hosted_zmath_shield_license": {
+    "status": "founding_pilot",
+    "price_usd_month": 55,
+    "price_usd_year": 550,
+    "scope": "One approved self-hosted CallChat-compatible deployment on one public server IP with unlimited users",
+    "includes": [
+      "ZME1 protected-file workspace",
+      "vault notes",
+      "owner-controlled MatrixRTC and Q Call posture",
+      "pilot entitlement and deployment review",
+      "business deployment guidance"
+    ],
+    "purchase_page": "https://callchat.org/license/#buy"
+  },
+  "payment_contact": "paypal@talktoai.org",
+  "payment_link": "https://www.paypal.com/paypalme/ob1whv",
+  "security_boundary": [
+    "No plaintext files in this public status endpoint.",
+    "No Shield passwords, pattern material, derived keys, policy bearer secrets, or private ZMath source are published here.",
+    "The hosted MVP performs encryption locally in the browser; private research and server credentials remain outside the public tree."
+  ]
+}

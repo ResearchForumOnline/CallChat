@@ -1,0 +1,34 @@
+[Unit]
+Description=CallChat ZERO Matrix Bot Bridge
+After=network-online.target callchat-synapse.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=callchat-bot
+Group=callchat-bot
+UMask=0077
+WorkingDirectory=/opt/callchat-zero-bot
+EnvironmentFile=/etc/callchat-zero-bot/bot.env
+ExecStart=/opt/callchat-zero-bot/.venv/bin/python /opt/callchat-zero-bot/zero_matrix_bot_e2ee.py
+Restart=always
+RestartSec=8
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/callchat-zero-bot/store
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

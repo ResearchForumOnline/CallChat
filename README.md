@@ -1,6 +1,6 @@
 # CallChat Community
 
-Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, voice/video notes, Q Call secure-comms sales assets, and a clean public boundary for optional premium Shield features.
+Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, an E2EE-only Zero Bot example, owner-controlled MatrixRTC guidance, and a reviewable ZShield ZME1 protected-file baseline.
 
 <p align="center">
   <img src="docs/images/callchat-community-hero.svg" alt="CallChat Community self-hosted Matrix server kit" width="100%">
@@ -16,7 +16,7 @@ Self-hosted Matrix chat with a CallChat front door, a branded Element Web profil
 
 ## Q Call Secure Comms License
 
-Q Call is the commercial CallChat secure-communications offer for teams that want privacy and protection in the quantum age without publishing private Shield/ZMath implementation code.
+Q Call is the commercial CallChat secure-communications offer for teams that want privacy and protection in the quantum age. The standards-based ZME1 browser baseline is public and testable; premium entitlement, managed recovery, enterprise policy, and private ZMath research remain separate.
 
 - Live license page: [callchat.org/license](https://callchat.org/license/)
 - Pricing: USD $55 per month or USD $550 per year.
@@ -41,12 +41,15 @@ See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for
 - Scripts for health checks, backups, and release packaging.
 - Docs for DNS, installation, admin tasks, Element setup, TURN calls, OpenZero, updates, and public safety boundaries.
 - Optional AI bot integration notes for OpenZero-style local agents.
+- A runnable Matrix E2EE Zero Bot that refuses unencrypted and allow-all room policies.
+- A local Web Crypto ZShield workspace, ZME1 interoperability profile, threat model, test vector, and negative tests.
+- Truthful JSON status schemas for Shield and owner-controlled MatrixRTC/Q Calls.
 
 ## What This Repo Does Not Include
 
 This public repository does not include private deployment material:
 
-- ZMath / CallChat Shield implementation source.
+- Private ZMath research, premium entitlement, managed recovery, or enterprise policy source.
 - Matrix signing keys.
 - Database passwords.
 - Synapse shared registration secrets.
@@ -55,7 +58,17 @@ This public repository does not include private deployment material:
 - Production backups.
 - Private entitlement or licensing code.
 
-Standard Matrix chat can be self-hosted from this repo. Premium Shield behaviour is documented only at a safe product level.
+Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline uses PBKDF2-SHA-256 and AES-256-GCM through Web Crypto for local `.zme1` files; it is not the private premium ZMath layer and it does not claim live audio is quantum encrypted.
+
+## Verified Security Baseline
+
+- Current CallChat rooms are configured with Matrix Megolm E2EE. Encryption protects new encrypted events; it does not retroactively encrypt earlier room history.
+- Zero Bot uses `matrix-nio[e2e]` with a persistent Olm/Megolm store and explicitly approved rooms.
+- ZShield encrypts files or vault notes locally before users attach the `.zme1` container.
+- Calls use Matrix identity plus WebRTC DTLS-SRTP; the hosted deployment can use owner-controlled MatrixRTC authorization and SFU infrastructure.
+- The PQC work is a roadmap. CallChat does not claim that today’s audio packets use post-quantum encryption.
+
+Reproducible evidence and exact limits: [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
 
 ## Architecture
 
