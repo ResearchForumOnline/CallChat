@@ -22,6 +22,11 @@ jobs:
       - name: Zero Bot syntax
         run: python3 -m py_compile ai/callchat-zero-bot/zero_matrix_bot_e2ee.py
 
+      - name: IonQ receipt boundary
+        run: |
+          python3 -m py_compile ai/zero_agent_bridge.py ai/test_zero_agent_bridge.py
+          python3 -m unittest ai/test_zero_agent_bridge.py -v
+
       - name: Public JSON validation
         run: |
           python3 -m json.tool web/public/api/shield-status.json >/dev/null
