@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ZShield Workspace | CallChat</title>
-    <meta name="description" content="Protect and open ZShield ZME1 files locally in your browser, then send the encrypted attachment through CallChat.">
+    <meta name="description" content="Protect and open ZShield messages and ZME1 files locally in your browser, then send only ciphertext through CallChat.">
     <meta name="robots" content="noindex, follow">
     <meta name="theme-color" content="#08090b">
     <link rel="icon" href="/favicon.ico" sizes="any">
@@ -28,9 +28,9 @@
     <main class="shield-workspace">
       <section class="shield-titlebar" aria-labelledby="workspace-title">
         <div>
-          <p class="eyebrow">ZME1 protected payloads</p>
+          <p class="eyebrow">ZShield messages + ZME1 files</p>
           <h1 id="workspace-title">Protect before you send.</h1>
-          <p>Your file is encrypted locally. CallChat receives only the encrypted container.</p>
+          <p>Messages and files are encrypted locally. Paste or attach only the authenticated envelope in CallChat.</p>
         </div>
         <div class="live-security" id="live-security" aria-live="polite">
           <span class="live-dot" aria-hidden="true"></span>
@@ -39,7 +39,7 @@
         </div>
       </section>
 
-      <section class="shield-tool" aria-label="ZShield file workspace">
+      <section class="shield-tool" aria-label="ZShield message and file workspace">
         <div class="shield-tabs" role="tablist" aria-label="ZShield mode">
           <button id="protect-tab" type="button" role="tab" aria-selected="true" aria-controls="protect-panel">Protect</button>
           <button id="open-tab" type="button" role="tab" aria-selected="false" aria-controls="open-panel">Open</button>
@@ -50,6 +50,7 @@
             <div class="field-row">
               <label for="source-type">Payload</label>
               <select id="source-type">
+                <option value="message">Chat message</option>
                 <option value="file">File</option>
                 <option value="note">Vault note</option>
               </select>
@@ -60,6 +61,12 @@
               <span id="protect-file-name">Up to 50 MB</span>
               <input id="protect-file" type="file">
             </label>
+
+            <div class="note-field" id="message-field">
+              <label for="message-text">Private message</label>
+              <textarea id="message-text" rows="7" maxlength="12000" placeholder="Message to protect before pasting into CallChat"></textarea>
+              <small>Recipients need this workspace, the passphrase, and the same pattern file if one is used.</small>
+            </div>
 
             <div class="note-field" id="note-field" hidden>
               <label for="vault-note">Vault note</label>
@@ -82,20 +89,44 @@
               <input id="protect-pattern" type="file" accept="image/*,.bin,.dat">
             </label>
 
+            <label class="factor-row quantum-option" for="ionq-receipt">
+              <span><strong>IonQ simulator receipt</strong><small>Optional research evidence only. It never supplies the encryption key and receives no plaintext.</small></span>
+              <input id="ionq-receipt" type="checkbox">
+            </label>
+
             <div class="tool-actions">
               <button class="button primary" type="submit" id="protect-button">Protect payload</button>
+              <button class="button secondary" type="button" id="copy-message-button" hidden>Copy shielded message</button>
               <button class="button secondary" type="button" id="share-button" hidden>Share encrypted file</button>
               <a class="button ghost" href="/element/#/room/#zero-bot-lab:callchat.org">Open CallChat</a>
+            </div>
+            <div class="message-output" id="message-output-wrap" hidden>
+              <label for="message-output">Authenticated ZShield envelope</label>
+              <textarea id="message-output" rows="7" readonly spellcheck="false"></textarea>
+              <small id="message-fingerprint"></small>
             </div>
           </form>
         </div>
 
         <div id="open-panel" class="shield-panel" role="tabpanel" aria-labelledby="open-tab" hidden>
           <form id="open-form">
+            <div class="field-row">
+              <label for="open-source-type">Payload</label>
+              <select id="open-source-type">
+                <option value="message">Chat message</option>
+                <option value="file">ZME1 file</option>
+              </select>
+            </div>
+
+            <div class="message-output" id="open-message-wrap">
+              <label for="open-message">Shielded message</label>
+              <textarea id="open-message" rows="7" placeholder="Paste the complete ZSHIELD1: envelope" spellcheck="false"></textarea>
+            </div>
+
             <label class="file-zone" id="open-file-zone" for="open-file">
               <strong>Choose ZME1 container</strong>
               <span id="open-file-name">.zme1</span>
-              <input id="open-file" type="file" accept=".zme1,application/json,application/octet-stream" required>
+              <input id="open-file" type="file" accept=".zme1,application/json,application/octet-stream">
             </label>
 
             <div class="field-row">
@@ -110,7 +141,13 @@
 
             <div class="tool-actions">
               <button class="button primary" type="submit" id="open-button">Open payload</button>
+              <button class="button secondary" type="button" id="copy-opened-button" hidden>Copy plaintext</button>
               <button class="button ghost" type="reset">Clear</button>
+            </div>
+            <div class="message-output" id="opened-message-wrap" hidden>
+              <label for="opened-message">Authenticated plaintext</label>
+              <textarea id="opened-message" rows="7" readonly></textarea>
+              <small id="opened-message-context"></small>
             </div>
           </form>
         </div>
@@ -124,7 +161,7 @@
       <section class="shield-evidence" aria-label="Security profile">
         <div><strong>AES-256-GCM</strong><span>Authenticated payload encryption</span></div>
         <div><strong>PBKDF2-SHA-256</strong><span>600,000 iterations with a random salt</span></div>
-        <div><strong>ZME1</strong><span>Versioned CallChat Shield container</span></div>
+        <div><strong>ZMath policy</strong><span>Authenticated purpose and transport context</span></div>
         <div><strong>Matrix E2EE</strong><span>Encrypted transport remains the room security base</span></div>
       </section>
     </main>

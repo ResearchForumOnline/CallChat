@@ -4,7 +4,7 @@ Status: working interoperability profile for the CallChat ZShield hosted MVP.
 
 ## Scope
 
-ZME1 is an authenticated container for a file or UTF-8 vault note. The hosted
+ZME1 is an authenticated container for a file, UTF-8 vault note, or UTF-8 chat message. The hosted
 workspace creates and opens the container in the browser. Plaintext,
 passphrases, and optional pattern bytes are not sent to CallChat by the
 workspace.
@@ -25,12 +25,18 @@ The UTF-8 JSON object contains:
   appended by Web Crypto.
 
 The header contains `format`, `version`, `profile`, `payload`, `createdAt`,
-`kdf`, and `cipher`. Implementations must reject unknown format, version,
+`kdf`, and `cipher`, plus optional authenticated `context`. Implementations must reject unknown format, version,
 profile, KDF, cipher, or tag-length values.
 
 Filename, media type, size, payload kind, creation time, algorithms, salt, IV,
 and pattern-required flag are visible metadata. They are authenticated but not
 encrypted.
+
+Chat messages use the paste-safe prefix `ZSHIELD1:` followed by Base64-encoded
+UTF-8 container JSON. Their payload kind is `matrix-message`; the authenticated
+context records `matrix-message`, `ZMath-Shield-Policy-1`, and `Matrix-E2EE`.
+An optional IonQ simulator receipt may be recorded as authenticated metadata.
+It is never encryption key material.
 
 ## Canonical Header
 

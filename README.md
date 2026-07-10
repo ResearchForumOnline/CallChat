@@ -1,6 +1,6 @@
 # CallChat Community
 
-Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, an E2EE-only Zero Bot example, owner-controlled MatrixRTC guidance, and a reviewable ZShield ZME1 protected-file baseline.
+Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, an E2EE-only Zero Bot example, owner-controlled MatrixRTC guidance, and a reviewable ZShield ZME1 message-and-file baseline.
 
 <p align="center">
   <img src="docs/images/callchat-community-hero.svg" alt="CallChat Community self-hosted Matrix server kit" width="100%">
@@ -42,7 +42,9 @@ See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for
 - Docs for DNS, installation, admin tasks, Element setup, TURN calls, OpenZero, updates, and public safety boundaries.
 - Optional AI bot integration notes for OpenZero-style local agents.
 - A runnable Matrix E2EE Zero Bot that refuses unencrypted and allow-all room policies.
-- A local Web Crypto ZShield workspace, ZME1 interoperability profile, threat model, test vector, and negative tests.
+- A local Web Crypto ZShield workspace for messages and files, ZME1 interoperability profile, threat model, test vector, and negative tests.
+- A server-backed Synapse reCAPTCHA registration template with rate limits.
+- An optional server-side IonQ simulator receipt endpoint that stays outside the encryption key path.
 - Truthful JSON status schemas for Shield and owner-controlled MatrixRTC/Q Calls.
 
 ## What This Repo Does Not Include
@@ -58,13 +60,14 @@ This public repository does not include private deployment material:
 - Production backups.
 - Private entitlement or licensing code.
 
-Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline uses PBKDF2-SHA-256 and AES-256-GCM through Web Crypto for local `.zme1` files; it is not the private premium ZMath layer and it does not claim live audio is quantum encrypted.
+Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline uses PBKDF2-SHA-256 and AES-256-GCM through Web Crypto for local messages and `.zme1` files; it is not the private premium ZMath layer and it does not claim live audio is quantum encrypted.
 
 ## Verified Security Baseline
 
 - Current CallChat rooms are configured with Matrix Megolm E2EE. Encryption protects new encrypted events; it does not retroactively encrypt earlier room history.
 - Zero Bot uses `matrix-nio[e2e]` with a persistent Olm/Megolm store and explicitly approved rooms.
-- ZShield encrypts files or vault notes locally before users attach the `.zme1` container.
+- ZShield encrypts chat messages, files, or vault notes locally before users paste the envelope or attach the `.zme1` container.
+- Optional IonQ simulator receipts authenticate research context only; they never supply ZShield keys or receive plaintext.
 - Calls use Matrix identity plus WebRTC DTLS-SRTP; the hosted deployment can use owner-controlled MatrixRTC authorization and SFU infrastructure.
 - The PQC work is a roadmap. CallChat does not claim that today’s audio packets use post-quantum encryption.
 
@@ -181,7 +184,7 @@ CallChat Shield / ZMath is an optional premium vault layer for protected files a
 - Licensing model.
 - What clients should show when a Shield file is present.
 
-It does not publish the proprietary implementation. See [docs/zmath-boundary.md](docs/zmath-boundary.md).
+It publishes the standards-based ZME1 reference implementation, but not proprietary premium policy or private ZMath research. See [docs/zmath-boundary.md](docs/zmath-boundary.md), [docs/ionq-research-receipts.md](docs/ionq-research-receipts.md), and [docs/matrix-captcha-registration.md](docs/matrix-captcha-registration.md).
 
 The current public offer is the Q Call secure-comms license: USD $55/month or USD $550/year for unlimited users on one approved public server IP. The public repo can describe the offer, customer flow, and safe integration points; private entitlement logic and Shield/ZMath implementation stay outside GitHub.
 

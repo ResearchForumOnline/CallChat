@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CallChat Shield - Local ZME1 Protection</title>
-    <meta name="description" content="Protect files and vault notes locally as authenticated ZME1 containers, then send only the encrypted attachment through CallChat.">
+    <meta name="description" content="Protect messages, files, and vault notes locally as authenticated ZShield envelopes, then send only ciphertext through CallChat.">
     <link rel="canonical" href="https://callchat.org/shield/">
     <meta property="og:title" content="CallChat Shield">
-    <meta property="og:description" content="Protect files and vault notes locally as authenticated ZME1 containers, then send only the encrypted attachment through CallChat.">
+    <meta property="og:description" content="Protect messages, files, and vault notes locally as authenticated ZShield envelopes, then send only ciphertext through CallChat.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://callchat.org/shield/">
     <meta name="twitter:card" content="summary">
@@ -27,7 +27,7 @@
         "name": "CallChat Shield",
         "applicationCategory": "SecurityApplication",
         "url": "https://callchat.org/shield/",
-        "description": "Local authenticated ZME1 protection for files and vault notes sent through CallChat.",
+        "description": "Local authenticated ZShield protection for messages, files, and vault notes sent through CallChat.",
         "offers": [
           {"@type": "Offer", "name": "Hosted CallChat Shield", "price": "0", "priceCurrency": "USD"},
           {"@type": "Offer", "name": "Self-hosted ZMath Shield / Q Call Monthly", "price": "55", "priceCurrency": "USD"},
@@ -56,9 +56,9 @@
         <p class="eyebrow">ZMath / Zero Boundary Algebra</p>
         <h1>Encrypt locally. Send the container.</h1>
         <p>
-          ZShield turns a file or vault note into an authenticated <code>.zme1</code> container inside your browser.
+          ZShield turns a message, file, or vault note into an authenticated envelope inside your browser.
           The passphrase, optional pattern file, and plaintext stay on your device. Matrix E2EE protects the room;
-          ZShield adds a separate encrypted payload you can attach and forward.
+          ZShield adds a separate encrypted payload you can paste, attach, and forward.
         </p>
         <div class="page-actions">
           <a class="button primary" href="/shield/app/">Open ZShield workspace</a>
@@ -70,20 +70,20 @@
       <section class="product-band">
         <div>
           <p class="eyebrow">Working hosted MVP</p>
-          <h2>The protected-file path is live and testable.</h2>
+          <h2>The protected-message and file paths are live and testable.</h2>
           <p>
             The current workspace uses a deliberate passphrase and an optional pattern file, derives a local key,
             and applies AES-256-GCM authentication before download. Automatic account vault and recovery management
             remain a later reviewed milestone and are not claimed as active today.
           </p>
           <p>
-            Standard Matrix chat remains free. Shield is additive: it protects selected vault files and attachments
-            without turning normal messages into a locked paid feature.
+            Standard Matrix chat remains free. Shield is additive: use the workspace to protect selected messages,
+            vault notes, and attachments before placing the ciphertext in an encrypted Matrix room.
           </p>
         </div>
         <div class="status-list">
           <div><strong>Current rooms</strong><span>Live status confirms Matrix E2EE across every existing CallChat room.</span></div>
-          <div><strong>ZShield payloads</strong><span>Files and vault notes can be protected locally as ZME1 containers.</span></div>
+          <div><strong>ZShield payloads</strong><span>Messages, files, and vault notes can be protected locally as authenticated envelopes.</span></div>
           <div><strong>Element fallback</strong><span>Element can send, download, and forward the encrypted attachment.</span></div>
         </div>
       </section>
@@ -94,7 +94,7 @@
           <article>
             <strong>01</strong>
             <span>Select content</span>
-            <small>A file, attachment, or vault note is marked for Shield protection.</small>
+            <small>A chat message, file, attachment, or vault note is marked for Shield protection.</small>
           </article>
           <article>
             <strong>02</strong>
@@ -104,12 +104,13 @@
           <article>
             <strong>03</strong>
             <span>Send or store</span>
-            <small>The protected <code>.zme1</code> container travels through Matrix as an attachment.</small>
+            <small>A message envelope is pasted into Matrix, or a protected <code>.zme1</code> file travels as an attachment.</small>
           </article>
         </div>
         <p class="notice">
           The hosted MVP uses reviewable standard Web Crypto primitives. Premium entitlement, managed recovery,
-          enterprise policy, and experimental ZMath research remain separate from this security baseline.
+          enterprise policy, and experimental quantum research remain separate from this security baseline. An
+          optional IonQ simulator receipt can be authenticated as evidence, but never supplies encryption keys.
         </p>
       </section>
 

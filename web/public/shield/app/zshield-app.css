@@ -116,9 +116,28 @@
 
 .field-row,
 .two-fields > div,
-.note-field {
+.note-field,
+.message-output {
   display: grid;
   gap: 8px;
+}
+
+.message-output {
+  padding: 14px;
+  border-left: 3px solid var(--accent);
+  background: #0a0e11;
+}
+
+.message-output small,
+.note-field small {
+  color: var(--muted);
+}
+
+.message-output textarea {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .field-row {
@@ -221,6 +240,13 @@
 .factor-row small {
   color: var(--muted);
   font-weight: 500;
+}
+
+.quantum-option input[type="checkbox"] {
+  justify-self: end;
+  width: 22px;
+  min-height: 22px;
+  accent-color: var(--accent);
 }
 
 .tool-actions {

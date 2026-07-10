@@ -4,8 +4,11 @@ export const PROFILE = "ZSHIELD-PBKDF2-AESGCM-1";
 export const ITERATIONS = 600000;
 export const MAX_ITERATIONS = 1200000;
 export const MAX_PAYLOAD_BYTES = 50 * 1024 * 1024;
+export const MAX_MESSAGE_BYTES = 12 * 1024;
+export const MESSAGE_PREFIX = "ZSHIELD1:";
 
 const encoder = new TextEncoder();
+const decoder = new TextDecoder("utf-8", {fatal: true});
 
 function randomBytes(length) {
   const value = new Uint8Array(length);
@@ -102,6 +105,16 @@ function validateHeader(header) {
   if (base64ToBytes(header.kdf.salt).length !== 16 || base64ToBytes(header.cipher.iv).length !== 12) {
     throw new Error("The container salt or IV length is invalid.");
   }
+  if (header.context !== undefined) {
+    if (!header.context || typeof header.context !== "object" || Array.isArray(header.context)) {
+      throw new Error("The authenticated ZMath context is invalid.");
+    }
+    for (const [key, limit] of [["purpose", 64], ["zmathPolicy", 128], ["transport", 64], ["quantumReceipt", 256]]) {
+      if (header.context[key] !== undefined && (typeof header.context[key] !== "string" || header.context[key].length > limit)) {
+        throw new Error("The authenticated ZMath context is invalid.");
+      }
+    }
+  }
 }
 
 export async function protectPayload(options) {
@@ -135,6 +148,17 @@ export async function protectPayload(options) {
       tagLength: 128
     }
   };
+  if (options.context) {
+    header.context = {
+      purpose: String(options.context.purpose || "protected-payload"),
+      zmathPolicy: String(options.context.zmathPolicy || "ZMath-Shield-Policy-1"),
+      transport: String(options.context.transport || "independent")
+    };
+    if (options.context.quantumReceipt) {
+      header.context.quantumReceipt = String(options.context.quantumReceipt);
+    }
+  }
+  validateHeader(header);
   const key = await deriveKey(options.passphrase, patternBytes, salt, ITERATIONS);
   const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
     {name: "AES-GCM", iv, additionalData: encoder.encode(canonical(header)), tagLength: 128},
@@ -182,4 +206,71 @@ export async function openContainerPayload(options) {
     throw new Error("Authenticated payload size does not match the header.");
   }
   return {bytes: plaintext, header};
+}
+
+export function encodeMessageContainer(container) {
+  const encoded = encoder.encode(JSON.stringify(container));
+  if (encoded.length > 64 * 1024) throw new Error("The shielded message envelope is too large for chat.");
+  return MESSAGE_PREFIX + bytesToBase64(encoded);
+}
+
+export function decodeMessageContainer(value) {
+  const envelope = String(value || "").trim();
+  if (!envelope.startsWith(MESSAGE_PREFIX)) {
+    throw new Error("Paste a complete ZSHIELD1 message envelope.");
+  }
+  let container;
+  try {
+    container = JSON.parse(decoder.decode(base64ToBytes(envelope.slice(MESSAGE_PREFIX.length))));
+  } catch (error) {
+    throw new Error("The shielded message envelope is malformed.");
+  }
+  validateHeader(container && container.header);
+  if (container.header.payload.kind !== "matrix-message") {
+    throw new Error("This ZShield envelope does not contain a chat message.");
+  }
+  return container;
+}
+
+export async function protectMessage(options) {
+  const bytes = encoder.encode(String(options.message || ""));
+  if (!bytes.length) throw new Error("Enter a message first.");
+  if (bytes.length > MAX_MESSAGE_BYTES) throw new Error("Keep shielded messages below 12 KB.");
+  const container = await protectPayload({
+    bytes,
+    name: "zshield-message.txt",
+    type: "text/plain;charset=utf-8",
+    kind: "matrix-message",
+    passphrase: options.passphrase,
+    patternBytes: options.patternBytes,
+    createdAt: options.createdAt,
+    context: {
+      purpose: "matrix-message",
+      zmathPolicy: "ZMath-Shield-Policy-1",
+      transport: "Matrix-E2EE",
+      quantumReceipt: options.quantumReceipt
+    }
+  });
+  return {container, envelope: encodeMessageContainer(container)};
+}
+
+export async function openMessage(options) {
+  const container = decodeMessageContainer(options.envelope);
+  const opened = await openContainerPayload({
+    container,
+    passphrase: options.passphrase,
+    patternBytes: options.patternBytes
+  });
+  let message;
+  try {
+    message = decoder.decode(opened.bytes);
+  } catch (error) {
+    throw new Error("The authenticated message is not valid UTF-8 text.");
+  }
+  return {message, header: opened.header};
+}
+
+export async function containerFingerprint(container) {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(canonical(container))));
+  return Array.from(digest.subarray(0, 12), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
