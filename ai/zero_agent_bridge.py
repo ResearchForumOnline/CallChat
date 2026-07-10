@@ -36,7 +36,16 @@ RATE: dict[str, tuple[int, float]] = {}
 
 
 def allowed_origin(origin: str) -> bool:
-    return not ALLOWED_ORIGINS or origin in ALLOWED_ORIGINS
+    return canonical_allowed_origin(origin) is not None
+
+
+def canonical_allowed_origin(origin: str) -> str | None:
+    if not origin or "\r" in origin or "\n" in origin:
+        return None
+    for allowed in ALLOWED_ORIGINS:
+        if origin == allowed and "\r" not in allowed and "\n" not in allowed:
+            return allowed
+    return None
 
 
 def rate_ok(ip: str) -> bool:
@@ -210,12 +219,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_json(self, payload: dict[str, Any], status: int = 200) -> None:
         origin = self.headers.get("Origin", "")
+        response_origin = canonical_allowed_origin(origin)
         data = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(data)))
-        if origin and allowed_origin(origin):
-            self.send_header("Access-Control-Allow-Origin", origin)
+        if response_origin:
+            self.send_header("Access-Control-Allow-Origin", response_origin)
             self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
