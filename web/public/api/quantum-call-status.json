@@ -1,0 +1,34 @@
+{
+  "service": "CallChat Q-Calls",
+  "domain": "callchat.org",
+  "live_call_layer": {
+    "status": "owner_controlled_matrixrtc_active",
+    "stack": "Matrix-compatible voice/video through the CallChat homeserver, local MatrixRTC authorization, and a self-hosted LiveKit SFU",
+    "transport_security": "WebRTC DTLS-SRTP plus Matrix device/account identity controls",
+    "turn_relay": "configured",
+    "matrixrtc_authorization": "active",
+    "owner_controlled_sfu": "active"
+  },
+  "q_call_layer": {
+    "status": "operational_secure_call_baseline",
+    "scope": "Owner-controlled MatrixRTC, Matrix device identity, DTLS-SRTP media, TURN fallback, Shield status, and a PQC-ready research roadmap",
+    "user_experience": "Users start calls in the hosted CallChat Element client, which now prefers the local Element Call widget and owner-controlled MatrixRTC backend."
+  },
+  "ionq_research_hook": {
+    "status": "server_side_optional",
+    "public_api_key": false,
+    "browser_secret_exposure": false,
+    "purpose": "Future approved quantum-assisted experiments, call policy attestation, or research evidence. Not required for ordinary calls."
+  },
+  "claims_boundary": [
+    "CallChat does not claim live audio packets are quantum encrypted today.",
+    "Q-Calls must be described as Matrix/WebRTC secure calls with a PQC-ready and optional IonQ research layer.",
+    "No IonQ API keys, ZMath private code, Shield secrets, Matrix signing keys, or recovery material are published here."
+  ],
+  "links": {
+    "q_calls": "https://callchat.org/quantum-calls/",
+    "web_client": "https://callchat.org/element/#/login",
+    "manuals": "https://callchat.org/manuals/",
+    "shield_status": "https://callchat.org/api/shield-status.json"
+  }
+}

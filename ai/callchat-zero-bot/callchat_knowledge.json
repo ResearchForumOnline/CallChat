@@ -1,0 +1,61 @@
+{
+  "product": "CallChat ZERO",
+  "public_identity": "A Matrix-compatible sovereign messenger owned by the TalkToAI / University of ZERO ecosystem.",
+  "homeserver": "callchat.org",
+  "matrix_api_note": "callchat.org is the working login homeserver. matrix.callchat.org is reserved for the technical Matrix API path when DNS and proxy are enabled.",
+  "core_features": [
+    "standard Matrix-compatible direct messages and rooms",
+    "hosted Element Web client at /element/",
+    "CallChat-styled web chat front door at /chat/",
+    "Element app compatibility",
+    "voice and video through Matrix clients when TURN is configured",
+    "Q-Calls as a Matrix/WebRTC secure-call mode with Shield policy, PQC-ready planning, and optional server-side IonQ research hooks",
+    "included hosted CallChat Shield / ZMath vault file layer on callchat.org",
+    "self-hosted ZMath Shield / Q Call secure-comms license at USD 55/month or USD 550/year for unlimited users on one approved public server IP",
+    "optional Zero Bot AI assistant powered by OpenZero"
+  ],
+  "shield": {
+    "summary": "CallChat Shield is included for active hosted callchat.org accounts. The paid offer is the self-hosted ZMath Shield / Q Call secure-comms license at USD 55/month or USD 550/year for unlimited users on one approved public server IP. It protects selected files and vault notes around standard cryptographic controls and locally managed Shield material.",
+    "container": ".zme1",
+    "safe_public_claim": "Shield uses a serious cryptographic boundary and does not expose private ZMath implementation details in public JavaScript."
+  },
+  "openzero": {
+    "summary": "OpenZero is the preferred local/self-hosted AI brain for Zero Bot. It exposes an OpenAI-compatible /v1/chat/completions endpoint and can run CPU-first models.",
+    "default_url": "http://127.0.0.1:1024/v1/chat/completions",
+    "voice": "OpenZero can share local Voicebox or Piper voice services."
+  },
+  "voicebox": {
+    "summary": "Voicebox is the optional local voice backend for speech output. Zero Bot uses it only when a user requests voice or when an admin enables a future voice mode."
+  },
+  "q_calls": {
+    "summary": "CallChat Q-Calls keep the real call path on Matrix/Element WebRTC, DTLS-SRTP, device identity, and TURN. The extra Q-Call layer adds Shield status, PQC-ready guidance, call setup evidence, protected-file workflow, and optional server-side IonQ research hooks. It must be sold as quantum-ready secure-call posture, not as live quantum-encrypted audio unless a reviewed implementation proves that claim.",
+    "public_status": "https://callchat.org/api/quantum-call-status.json",
+    "docs": "https://callchat.org/quantum-calls/"
+  },
+  "sales_motion": {
+    "primary_offer": "Secure Comms With Q Call: privacy and protection in the quantum age.",
+    "pricing": {
+      "hosted_showcase": "USD 0 on callchat.org for active hosted showcase users",
+      "self_hosted_month": "USD 55/month",
+      "self_hosted_year": "USD 550/year",
+      "scope": "Unlimited users on one approved self-hosted deployment locked to one public server IP."
+    },
+    "ideal_customers": [
+      "privacy-led founders and small businesses",
+      "legal, finance, health, research, and consulting teams",
+      "agencies and resellers selling secure client communication",
+      "self-hosted Matrix operators",
+      "communities that need private rooms, secure calls, and protected files"
+    ],
+    "agent_goal": "Do not only teach. Qualify the visitor, identify the protected communication use case, explain the buyer outcome, then route them to https://callchat.org/license/#buy or https://callchat.org/#capture.",
+    "trust_rules": [
+      "Use Know, Like, Trust: explain what CallChat is, why it is useful, and what boundaries make it credible.",
+      "Never ask for passwords, API keys, private Shield material, recovery phrases, or confidential files.",
+      "Do not claim live audio packets are quantum-encrypted today. Say Q Call is quantum-ready secure-call posture around real Matrix/WebRTC calls."
+    ]
+  },
+  "frontdeskagent": {
+    "summary": "FrontDeskAgent can share OpenZero and Voicebox services for business reception workflows. CallChat can become the secure messaging layer around those workflows."
+  },
+  "safe_style": "Witty, direct, funny, and a little sarcastic without becoming abusive, unsafe, spammy, or hostile."
+}

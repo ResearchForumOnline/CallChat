@@ -1,0 +1,29 @@
+name: Security baseline
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Node setup
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: ZME1 crypto tests
+        run: node web/public/shield/app/zshield-core.test.mjs
+
+      - name: Zero Bot syntax
+        run: python3 -m py_compile ai/callchat-zero-bot/zero_matrix_bot_e2ee.py
+
+      - name: Public JSON validation
+        run: |
+          python3 -m json.tool web/public/api/shield-status.json >/dev/null
+          python3 -m json.tool web/public/api/quantum-call-status.json >/dev/null
+          python3 -m json.tool web/public/shield/app/test-vectors/zme1-v1.json >/dev/null
