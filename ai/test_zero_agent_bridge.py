@@ -53,5 +53,37 @@ class IonQReceiptTests(unittest.TestCase):
         self.assertNotIn("passphrase", payload)
 
 
+class OriginTests(unittest.TestCase):
+    def setUp(self):
+        self.original_origins = bridge.ALLOWED_ORIGINS.copy()
+
+    def tearDown(self):
+        bridge.ALLOWED_ORIGINS.clear()
+        bridge.ALLOWED_ORIGINS.update(self.original_origins)
+
+    def test_returns_canonical_allowlisted_origin(self):
+        bridge.ALLOWED_ORIGINS.clear()
+        bridge.ALLOWED_ORIGINS.add("https://callchat.example")
+        self.assertEqual(
+            bridge.canonical_allowed_origin("https://callchat.example"),
+            "https://callchat.example",
+        )
+        self.assertTrue(bridge.allowed_origin("https://callchat.example"))
+
+    def test_rejects_unlisted_and_header_injection_origins(self):
+        bridge.ALLOWED_ORIGINS.clear()
+        bridge.ALLOWED_ORIGINS.add("https://callchat.example")
+        self.assertIsNone(bridge.canonical_allowed_origin("https://attacker.example"))
+        self.assertIsNone(
+            bridge.canonical_allowed_origin("https://callchat.example\r\nX-Test: injected")
+        )
+        self.assertFalse(bridge.allowed_origin("https://attacker.example"))
+
+    def test_empty_allowlist_rejects_cross_origin_requests(self):
+        bridge.ALLOWED_ORIGINS.clear()
+        self.assertIsNone(bridge.canonical_allowed_origin("https://callchat.example"))
+        self.assertFalse(bridge.allowed_origin("https://callchat.example"))
+
+
 if __name__ == "__main__":
     unittest.main()
