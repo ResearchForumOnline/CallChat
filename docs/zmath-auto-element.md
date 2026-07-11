@@ -28,10 +28,11 @@ The current public profile is `ZMATH-PBKDF2-HKDF-AESGCM-2`:
 
 For the default automatic mode, the browser generates a non-exportable AES-GCM
 device key in IndexedDB and uses it to encrypt the local ZMath profile. The
-encrypted profile record is stored on the same origin and automatically
+encrypted profile record is stored in the same IndexedDB vault and automatically
 restored on later visits from that trusted browser. Manual session-only import,
-the older passphrase-encrypted pattern fallback, Matrix-only sending, reset,
-and the encryption diagnostic remain under **Advanced options**. Recipients
+Matrix-only sending, reset, and the encryption diagnostic remain under
+**Advanced options**. Legacy passphrase-encrypted pattern records remain
+readable during manual recovery. Recipients
 and approved devices still need the same passphrase and exact image to open the
 extra application layer.
 

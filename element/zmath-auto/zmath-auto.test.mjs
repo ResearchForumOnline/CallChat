@@ -23,6 +23,7 @@ assert.match(source, /previous automatic profile is unavailable/i);
 assert.match(source, /setup\.hidden = matrixOnly/);
 assert.match(source, /DEVICE_PROFILE_DOMAIN/);
 assert.match(source, /indexedDB\.open/);
+assert.match(source, /objectStore\(DEVICE_DB_STORE\)\.put\(record, TRUSTED_PROFILE_KEY\)/);
 assert.match(source, /generateKey\([\s\S]*false,[\s\S]*\["encrypt", "decrypt"\]/);
 assert.match(source, /MODULE_OWNER/);
 assert.match(source, /Run encryption self-test/);
@@ -35,6 +36,7 @@ assert.match(source, /MutationObserver/);
 assert.match(source, /Matrix-only sending/);
 assert.doesNotMatch(source, /localStorage\.setItem\([^\n]*ZMATHCALL1/);
 assert.doesNotMatch(source, /localStorage\.setItem\([^\n]*passphrase/i);
+assert.doesNotMatch(source, /localStorage\.setItem\(TRUSTED_PROFILE_KEY/);
 assert.doesNotMatch(source, /openai|anthropic|gemini|ai api/i);
 
 console.log("ZMath Auto Element interception contract: ok");

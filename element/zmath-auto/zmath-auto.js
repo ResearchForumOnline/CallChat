@@ -35,6 +35,7 @@ let busy = false;
 let scanQueued = false;
 let setupBusy = false;
 let automaticRestore = null;
+let trustedProfileAvailable = false;
 const openedBodies = new Map();
 const preparedCallSecrets = new Map();
 
@@ -97,12 +98,13 @@ async function deviceKey(create = false) {
   }
 }
 
-async function deleteDeviceKey() {
+async function deleteDeviceProfile() {
   const database = await openDeviceDatabase();
   try {
     await new Promise((resolve, reject) => {
       const transaction = database.transaction(DEVICE_DB_STORE, "readwrite");
       transaction.objectStore(DEVICE_DB_STORE).delete(DEVICE_KEY_ID);
+      transaction.objectStore(DEVICE_DB_STORE).delete(TRUSTED_PROFILE_KEY);
       transaction.oncomplete = resolve;
       transaction.onerror = () => reject(transaction.error || new Error("Trusted-device key could not be removed."));
       transaction.onabort = () => reject(transaction.error || new Error("Trusted-device key removal was cancelled."));
@@ -113,7 +115,7 @@ async function deleteDeviceKey() {
 }
 
 function hasTrustedDeviceProfile() {
-  return Boolean(localStorage.getItem(TRUSTED_PROFILE_KEY));
+  return trustedProfileAvailable;
 }
 
 async function saveTrustedDeviceProfile(passphrase, patternBytes, name) {
@@ -131,30 +133,63 @@ async function saveTrustedDeviceProfile(passphrase, patternBytes, name) {
       key,
       plaintext
     ));
-    localStorage.setItem(TRUSTED_PROFILE_KEY, JSON.stringify({
+    const record = {
       version: 1,
       iv: bytesToBase64(iv),
       ciphertext: bytesToBase64(ciphertext)
-    }));
+    };
+    const database = await openDeviceDatabase();
+    try {
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction(DEVICE_DB_STORE, "readwrite");
+        transaction.objectStore(DEVICE_DB_STORE).put(record, TRUSTED_PROFILE_KEY);
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error || new Error("Trusted-device profile could not be saved."));
+        transaction.onabort = () => reject(transaction.error || new Error("Trusted-device profile storage was cancelled."));
+      });
+      trustedProfileAvailable = true;
+    } finally {
+      database.close();
+    }
   } finally {
     plaintext.fill(0);
   }
 }
 
 async function loadTrustedDeviceProfile() {
-  const record = JSON.parse(localStorage.getItem(TRUSTED_PROFILE_KEY) || "null");
-  if (!record || record.version !== 1 || base64ToBytes(record.iv).length !== 12) return null;
+  const database = await openDeviceDatabase();
+  let record;
+  try {
+    record = await new Promise((resolve, reject) => {
+      const transaction = database.transaction(DEVICE_DB_STORE, "readonly");
+      const request = transaction.objectStore(DEVICE_DB_STORE).get(TRUSTED_PROFILE_KEY);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error("Trusted-device profile could not be read."));
+    });
+  } finally {
+    database.close();
+  }
+  trustedProfileAvailable = Boolean(record);
+  if (!record) return null;
+  if (record.version !== 1 || base64ToBytes(record.iv).length !== 12) {
+    throw new Error("The previous automatic profile is unavailable. Reset this device or import recovery factors.");
+  }
   const key = await deviceKey(false);
-  if (!key) return null;
-  const plaintext = new Uint8Array(await crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: base64ToBytes(record.iv),
-      additionalData: encoder.encode(DEVICE_PROFILE_DOMAIN)
-    },
-    key,
-    base64ToBytes(record.ciphertext)
-  ));
+  if (!key) throw new Error("The previous automatic profile is unavailable. Reset this device or import recovery factors.");
+  let plaintext;
+  try {
+    plaintext = new Uint8Array(await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: base64ToBytes(record.iv),
+        additionalData: encoder.encode(DEVICE_PROFILE_DOMAIN)
+      },
+      key,
+      base64ToBytes(record.ciphertext)
+    ));
+  } catch {
+    throw new Error("The previous automatic profile is unavailable. Reset this device or import recovery factors.");
+  }
   try {
     const profile = JSON.parse(new TextDecoder().decode(plaintext));
     const pattern = base64ToBytes(profile.pattern);
@@ -168,12 +203,12 @@ async function loadTrustedDeviceProfile() {
 }
 
 async function clearTrustedDeviceProfile() {
-  localStorage.removeItem(TRUSTED_PROFILE_KEY);
   try {
-    await deleteDeviceKey();
+    await deleteDeviceProfile();
   } catch {
     // The encrypted profile is already removed; a missing device key is harmless.
   }
+  trustedProfileAvailable = false;
 }
 
 function bytesToBase64Url(bytes) {
@@ -229,25 +264,6 @@ async function vaultKey(passphrase, salt) {
     false,
     ["encrypt", "decrypt"]
   );
-}
-
-async function rememberPattern(passphrase, patternBytes, name) {
-  const salt = randomBytes(16);
-  const iv = randomBytes(12);
-  const key = await vaultKey(passphrase, salt);
-  const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
-    {name: "AES-GCM", iv, additionalData: encoder.encode("CallChat-ZMath-Device-Vault-1")},
-    key,
-    patternBytes
-  ));
-  localStorage.setItem(VAULT_KEY, JSON.stringify({
-    version: 1,
-    iterations: VAULT_ITERATIONS,
-    salt: bytesToBase64(salt),
-    iv: bytesToBase64(iv),
-    ciphertext: bytesToBase64(ciphertext),
-    name: String(name || "callchat-pattern.png").slice(0, 128)
-  }));
 }
 
 async function loadRememberedPattern(passphrase) {
@@ -413,7 +429,7 @@ function generatePassphrase() {
   return groups.join("-");
 }
 
-async function activateProfile(passphrase, pattern, name, {remember = false, trusted = false} = {}) {
+async function activateProfile(passphrase, pattern, name, {trusted = false} = {}) {
   if (String(passphrase || "").length < 14) throw new Error("Use a passphrase with at least 14 characters.");
   if (!(pattern instanceof Uint8Array) || !pattern.length) throw new Error("The exact pattern image is required.");
   const mediaRoot = await deriveMediaRoot(passphrase, pattern);
@@ -427,7 +443,6 @@ async function activateProfile(passphrase, pattern, name, {remember = false, tru
   sessionMediaRoot = mediaRoot;
   pendingPattern = null;
   pendingPatternName = "";
-  if (remember) await rememberPattern(passphrase, sessionPattern, sessionPatternName);
   if (trusted) await saveTrustedDeviceProfile(passphrase, sessionPattern, sessionPatternName);
   const input = document.getElementById("zmath-auto-passphrase");
   if (input) input.value = "";
@@ -443,7 +458,7 @@ async function createAutomaticSetup() {
   try {
     const passphrase = generatePassphrase();
     const generated = await generatePatternImage({download: true});
-    await activateProfile(passphrase, generated.bytes, generated.name, {remember: true, trusted: true});
+    await activateProfile(passphrase, generated.bytes, generated.name, {trusted: true});
     const recovery = document.getElementById("zmath-auto-recovery");
     const recoveryCode = document.getElementById("zmath-auto-recovery-code");
     recovery.hidden = false;
@@ -457,14 +472,12 @@ async function createAutomaticSetup() {
 
 async function restoreAutomaticSetup({notify = false} = {}) {
   if (isUnlocked()) return true;
-  if (isMatrixOnly() || !hasTrustedDeviceProfile()) return false;
+  if (isMatrixOnly()) return false;
   if (!automaticRestore) {
     automaticRestore = (async () => {
       const profile = await loadTrustedDeviceProfile();
       if (!profile) {
-        localStorage.removeItem(TRUSTED_PROFILE_KEY);
         updateUi();
-        if (notify) toast("The previous automatic profile is unavailable. Create a new profile or import recovery factors.");
         return false;
       }
       await activateProfile(profile.passphrase, profile.pattern, profile.name);
@@ -529,9 +542,6 @@ function createUi() {
           <p class="zmath-auto-meta" id="zmath-auto-pattern-meta">No pattern loaded.</p>
           <div class="zmath-auto-row">
             <label><input id="zmath-auto-trusted" type="checkbox" checked> Auto-unlock on this trusted device</label>
-          </div>
-          <div class="zmath-auto-row">
-            <label><input id="zmath-auto-remember" type="checkbox" checked> Keep an encrypted pattern fallback</label>
           </div>
           <div class="zmath-auto-row">
             <label><input id="zmath-auto-matrix-only" type="checkbox"> Matrix-only sending</label>
@@ -693,10 +703,9 @@ async function unlock() {
   if (!pattern || !pattern.length) throw new Error("Import or generate the exact pattern image first.");
   const trusted = document.getElementById("zmath-auto-trusted").checked;
   await activateProfile(passphrase, pattern, name, {
-    remember: document.getElementById("zmath-auto-remember").checked,
     trusted,
   });
-  if (!trusted && hasTrustedDeviceProfile()) await clearTrustedDeviceProfile();
+  if (!trusted) await clearTrustedDeviceProfile();
   updateUi();
   toast(trusted
     ? "Shared profile active and automatic unlock enabled for this trusted device."
@@ -1036,7 +1045,7 @@ document.addEventListener("change", (event) => {
 window.callchatZMathRequired = true;
 window.callchatZMathCallRequired = true;
 window.callchatZMathAuto = Object.freeze({
-  version: "2026.07.11-auto7",
+  version: "2026.07.11-auto8",
   profile: PROFILE,
   isUnlocked,
   isMatrixOnly,

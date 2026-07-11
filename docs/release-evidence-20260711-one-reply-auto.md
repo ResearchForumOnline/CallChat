@@ -4,7 +4,7 @@ Date: 2026-07-11
 
 Release: `callchat-2026.07.11.8`
 
-Client module revision: `2026.07.11-auto7`
+Client module revision: `2026.07.11-auto8`
 
 ## Shipped capability
 
