@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 
 import {
+  PROFILE,
   containerFingerprint,
   decodeMessageContainer,
   openContainerPayload,
@@ -27,6 +28,17 @@ const container = await protectPayload({
 const opened = await openContainerPayload({container, passphrase, patternBytes: pattern});
 assert.deepEqual(opened.bytes, plaintext);
 assert.equal(opened.header.payload.name, "evidence.txt");
+assert.equal(opened.header.profile, PROFILE);
+assert.equal(opened.header.kdf.name, "PBKDF2-SHA-256+HKDF-SHA-256");
+
+await assert.rejects(
+  openContainerPayload({
+    container,
+    passphrase,
+    patternBytes: new TextEncoder().encode("wrong-pattern-factor")
+  }),
+  /Authentication failed/
+);
 
 await assert.rejects(
   openContainerPayload({container, passphrase: "Wrong-Passphrase-For-Test", patternBytes: pattern}),

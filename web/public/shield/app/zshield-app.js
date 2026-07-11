@@ -5,7 +5,6 @@ import * as ShieldCore from "./zshield-core.js";
 
   const FORMAT = "ZME1";
   const VERSION = 1;
-  const PROFILE = "ZSHIELD-PBKDF2-AESGCM-1";
   const ITERATIONS = 600000;
   const MAX_BYTES = 50 * 1024 * 1024;
   const encoder = new TextEncoder();
