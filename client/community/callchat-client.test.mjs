@@ -9,6 +9,8 @@ const home = await readFile(new URL("./home.html", import.meta.url), "utf8");
 
 assert.equal(config.brand, "CallChat Community");
 assert.equal(config.force_verification, true);
+assert.equal(config.features.feature_group_calls, true);
+assert.equal(config.features.feature_disable_call_per_sender_encryption, false);
 assert.equal(config.default_server_config["m.homeserver"].server_name, "callchat.org");
 assert.match(config.branding.auth_header_logo_url, /zmath-shield-logo\.svg$/);
 assert.match(config.embedded_pages.home_url, /callchat-home\.html$/);

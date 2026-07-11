@@ -16,6 +16,10 @@
   "default_theme": "dark",
   "default_federate": true,
   "mobile_guide_toast": false,
+  "features": {
+    "feature_group_calls": true,
+    "feature_disable_call_per_sender_encryption": false
+  },
   "room_directory": {
     "servers": ["callchat.org"]
   },
