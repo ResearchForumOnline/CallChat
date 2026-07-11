@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import hmac
 import ipaddress
 import json
@@ -12,8 +11,6 @@ import re
 import secrets
 import threading
 import time
-import urllib.error
-import urllib.request
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -104,58 +101,50 @@ def validate_account(username: object, password: object) -> tuple[str, str]:
     return clean_username, clean_password
 
 
-def registration_mac(secret: str, nonce: str, username: str, password: str) -> str:
-    # Synapse's shared-secret registration protocol mandates HMAC-SHA1 here;
-    # this authenticates one loopback request and is not a password hash.
-    digest = hmac.new(secret.encode("utf-8"), digestmod=hashlib.sha1)  # lgtm[py/weak-sensitive-data-hashing]
-    for value in (nonce, username, password):
-        digest.update(value.encode("utf-8"))
-        digest.update(b"\x00")
-    digest.update(b"notadmin")
-    return digest.hexdigest()
-
-
 class SynapseRegistrar:
     def __init__(self, shared_secret: str, endpoint: str = "http://127.0.0.1:8008/_synapse/admin/v1/register") -> None:
         self.shared_secret = shared_secret
         self.endpoint = endpoint
 
     @staticmethod
-    def _json_request(request: urllib.request.Request) -> tuple[int, dict[str, object]]:
+    def _registration_helper():
         try:
-            with urllib.request.urlopen(request, timeout=6) as response:
-                return response.status, json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as error:
-            try:
-                payload = json.loads(error.read().decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError):
-                payload = {}
-            return error.code, payload
-        except (OSError, TimeoutError) as error:
+            from synapse._scripts.register_new_matrix_user import request_registration
+        except ImportError as error:
             raise PublicError("The account service is temporarily unavailable.", 503, "homeserver_unavailable") from error
+        return request_registration
 
     def register(self, username: str, password: str) -> str:
-        status, nonce_payload = self._json_request(urllib.request.Request(self.endpoint, method="GET"))
-        nonce = nonce_payload.get("nonce")
-        if status != 200 or not isinstance(nonce, str):
-            raise PublicError("The account service is temporarily unavailable.", 503, "homeserver_unavailable")
-        body = json.dumps({
-            "nonce": nonce,
-            "username": username,
-            "password": password,
-            "mac": registration_mac(self.shared_secret, nonce, username, password),
-            "admin": False,
-        }).encode("utf-8")
-        request = urllib.request.Request(self.endpoint, data=body, method="POST", headers={"Content-Type": "application/json"})
-        status, payload = self._json_request(request)
-        if status == 200:
-            return str(payload.get("user_id") or f"@{username}:callchat.org")
-        errcode = payload.get("errcode")
-        if errcode == "M_USER_IN_USE":
+        messages: list[str] = []
+
+        class RegistrationFailed(Exception):
+            pass
+
+        def fail(_code: int) -> None:
+            raise RegistrationFailed
+
+        try:
+            self._registration_helper()(
+                user=username,
+                password=password,
+                server_location=self.endpoint.removesuffix("/_synapse/admin/v1/register"),
+                shared_secret=self.shared_secret,
+                admin=False,
+                _print=lambda message: messages.append(str(message)),
+                exit=fail,
+            )
+        except RegistrationFailed:
+            detail = " ".join(messages).lower()
+        except Exception as error:
+            raise PublicError("The account service is temporarily unavailable.", 503, "homeserver_unavailable") from error
+        else:
+            return f"@{username}:callchat.org"
+
+        if "already" in detail or "in use" in detail or "taken" in detail:
             raise PublicError("That username is already registered. Try another.", 409, "username_in_use")
-        if errcode == "M_INVALID_USERNAME":
+        if "invalid username" in detail:
             raise PublicError("That username is not allowed.", 400, "invalid_username")
-        if errcode == "M_WEAK_PASSWORD":
+        if "weak" in detail and "password" in detail:
             raise PublicError("Choose a stronger password.", 400, "weak_password")
         raise PublicError("The homeserver did not create the account. Try again later.", 502, "homeserver_error")
 

@@ -10,7 +10,7 @@ Group=callchat-register
 Environment=PYTHONUNBUFFERED=1
 Environment=CALLCHAT_ALLOWED_ORIGIN=https://callchat.org
 Environment=CALLCHAT_REGISTRATION_SECRET_FILE=/etc/callchat-register/registration-secret
-ExecStart=/usr/bin/python3 /opt/callchat-register/register_service.py
+ExecStart=/opt/callchat-synapse/venv/bin/python /opt/callchat-register/register_service.py
 Restart=on-failure
 RestartSec=3
 UMask=0077

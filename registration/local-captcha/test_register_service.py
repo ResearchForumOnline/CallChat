@@ -1,5 +1,3 @@
-import hashlib
-import hmac
 import json
 import re
 import threading
@@ -9,7 +7,7 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 from unittest.mock import patch
 
-from register_service import PublicError, RegistrationHandler, RegistrationState, registration_mac, validate_account
+from register_service import PublicError, RegistrationHandler, RegistrationState, SynapseRegistrar, validate_account
 
 
 class Clock:
@@ -66,11 +64,14 @@ class RegistrationServiceTests(unittest.TestCase):
         with self.assertRaises(PublicError):
             validate_account("valid", "short")
 
-    def test_synapse_mac_matches_protocol(self):
-        actual = registration_mac("secret", "nonce", "alice", "password1234")
-        digest = hmac.new(b"secret", digestmod=hashlib.sha1)
-        digest.update(b"nonce\x00alice\x00password1234\x00notadmin")
-        self.assertEqual(actual, digest.hexdigest())
+    def test_synapse_helper_is_called_for_non_admin_account(self):
+        calls = []
+        registrar = SynapseRegistrar("s" * 32)
+        registrar._registration_helper = lambda: lambda **kwargs: calls.append(kwargs)
+        self.assertEqual(registrar.register("alice", "correct horse battery"), "@alice:callchat.org")
+        self.assertEqual(calls[0]["admin"], False)
+        self.assertEqual(calls[0]["user"], "alice")
+        self.assertEqual(calls[0]["password"], "correct horse battery")
 
 
 class FakeRegistrar:
