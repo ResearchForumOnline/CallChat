@@ -36,9 +36,9 @@ class IonQReceiptTests(unittest.TestCase):
         bridge.IONQ_API_KEY = "test-only-key"
         result, error = bridge.request_ionq_receipt("not-a-commitment")
         self.assertIsNone(result)
-        self.assertIn("64-character", error)
+        self.assertIn("valid commitment", error)
 
-    @patch("zero_agent_bridge.urllib.request.urlopen", return_value=FakeResponse())
+    @patch("zero_agent_bridge.provider_control.urllib.request.urlopen", return_value=FakeResponse())
     def test_submits_simulator_receipt_outside_key_path(self, mocked_urlopen):
         bridge.IONQ_API_KEY = "test-only-key"
         result, error = bridge.request_ionq_receipt("b" * 64)
@@ -48,7 +48,7 @@ class IonQReceiptTests(unittest.TestCase):
         request = mocked_urlopen.call_args.args[0]
         payload = json.loads(request.data)
         self.assertEqual(payload["backend"], "simulator")
-        self.assertEqual(payload["metadata"]["security_boundary"], "not-key-material")
+        self.assertEqual(payload["metadata"]["security_boundary"], "provider-isolated")
         self.assertNotIn("plaintext", payload)
         self.assertNotIn("passphrase", payload)
 
@@ -83,6 +83,24 @@ class OriginTests(unittest.TestCase):
         bridge.ALLOWED_ORIGINS.clear()
         self.assertIsNone(bridge.canonical_allowed_origin("https://callchat.example"))
         self.assertFalse(bridge.allowed_origin("https://callchat.example"))
+
+
+class SecretRoutingTests(unittest.TestCase):
+    def test_detects_assigned_secrets_without_blocking_general_questions(self):
+        self.assertTrue(bridge.likely_secretish("password: CorrectHorseBatteryStaple"))
+        self.assertTrue(bridge.likely_secretish("access token = syt_abcdefghijklmnopqrstuvwxyz123456"))
+        self.assertFalse(bridge.likely_secretish("How should I protect a password?"))
+
+    def test_likely_secret_skips_cloud_provider(self):
+        with patch(
+            "zero_agent_bridge.provider_control.cloud_chat_completion",
+            return_value=("cloud reply", {"provider": "openai", "model": "gpt-5.5"}),
+        ) as cloud, patch(
+            "zero_agent_bridge.ask_openzero", return_value="local only"
+        ) as local:
+            self.assertEqual(bridge.ask_ai("api key: sk-private-example-123456"), "local only")
+            cloud.assert_not_called()
+            local.assert_called_once()
 
 
 if __name__ == "__main__":

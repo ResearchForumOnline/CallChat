@@ -135,9 +135,9 @@ def security_fact(room: MatrixRoom, prompt: str) -> str | None:
         "Verified room security status:\n"
         f"- Matrix end-to-end encryption: {room_state}\n"
         "- Message algorithm when enabled: Megolm AES-SHA2\n"
-        "- Calls: Matrix WebRTC with DTLS-SRTP and the configured TURN relay\n"
+        "- Calls: owner-controlled MatrixRTC/LiveKit frame encryption with TURN and the required hosted ZMath media factor\n"
         "- ZShield: local .zme1 protection for selected files and vault notes\n"
-        "ZShield does not claim to quantum-encrypt live audio. Never send secrets to the AI bot."
+        "IonQ assurance receives only a commitment of the non-secret control record. Never send secrets to the AI bot."
     )
 
 

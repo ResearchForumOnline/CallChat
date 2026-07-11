@@ -52,13 +52,13 @@ can still be a Megolm `m.room.encrypted` event. The distinguishing evidence is
 that the inner attachment is a ZME1 container. An event whose decrypted body is
 still the original `.docx`, image, or other filename used Matrix protection only.
 
-## Honest security boundary
+## Security boundary
 
 This is an application-layer control above Matrix. Matrix room encryption and
-device verification remain important. Calls use MatrixRTC/WebRTC with their
-standard transport protections; this repository does not claim that live audio
-or video is quantum encrypted. IonQ experiments are optional research receipts,
-not encryption keys and not a replacement for reviewed cryptography.
+device verification remain important. The hosted protected-call profile uses a
+required in-memory ZMath factor with rotating MatrixRTC media keys before
+LiveKit frame encryption. IonQ assurance jobs are provider-isolated receipts
+around that control record and remain outside the encryption key path.
 
 The integration source is in [`element/zmath-auto`](../element/zmath-auto/).
 The native upload choke point is published in CallChat Community commit

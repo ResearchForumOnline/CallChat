@@ -27,7 +27,7 @@ The exact entitlement and support terms on the live checkout page control.
 
 - Standardized post-quantum key establishment and signature integration.
 - Cryptographic agility and migration policy for future protocol upgrades.
-- Optional IonQ research receipts kept outside encryption and key generation.
+- Provider-isolated IonQ assurance receipts kept outside encryption and key generation.
 - Further managed recovery, enterprise policy, and deployment automation.
 
 Roadmap items are not presented as deployed cryptographic protection.

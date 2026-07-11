@@ -9,7 +9,7 @@
     "CallChat-styled web chat front door at /chat/",
     "Element app compatibility",
     "voice and video through Matrix clients when TURN is configured",
-    "Q-Calls as a Matrix/WebRTC secure-call mode with Shield policy, PQC-ready planning, and optional server-side IonQ research hooks",
+    "Q-Calls with owner-controlled MatrixRTC/LiveKit frame encryption, a required in-memory ZMath media factor, and provider-isolated AI plus IonQ assurance receipts",
     "included hosted CallChat Shield / ZMath vault file layer on callchat.org",
     "self-hosted ZMath Shield / Q Call secure-comms license at USD 55/month or USD 550/year for unlimited users on one approved public server IP",
     "optional Zero Bot AI assistant powered by OpenZero"
@@ -28,7 +28,7 @@
     "summary": "Voicebox is the optional local voice backend for speech output. Zero Bot uses it only when a user requests voice or when an admin enables a future voice mode."
   },
   "q_calls": {
-    "summary": "CallChat Q-Calls keep the real call path on Matrix/Element WebRTC, DTLS-SRTP, device identity, and TURN. The extra Q-Call layer adds Shield status, PQC-ready guidance, call setup evidence, protected-file workflow, and optional server-side IonQ research hooks. It must be sold as quantum-ready secure-call posture, not as live quantum-encrypted audio unless a reviewed implementation proves that claim.",
+    "summary": "CallChat Q-Calls use owner-controlled MatrixRTC, self-hosted LiveKit, TURN, device identity, frame encryption, and a required room-scoped ZMath media factor. The owner can add an AI-reviewed assurance record and bind its SHA-256 commitment to an IonQ quantum job receipt without putting protected content or key material in the provider lane.",
     "public_status": "https://callchat.org/api/quantum-call-status.json",
     "docs": "https://callchat.org/quantum-calls/"
   },
