@@ -1,0 +1,34 @@
+[Unit]
+Description=CallChat local CAPTCHA registration service
+After=network-online.target callchat-synapse.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=callchat-register
+Group=callchat-register
+Environment=PYTHONUNBUFFERED=1
+Environment=CALLCHAT_ALLOWED_ORIGIN=https://callchat.org
+Environment=CALLCHAT_REGISTRATION_SECRET_FILE=/etc/callchat-register/registration-secret
+ExecStart=/opt/callchat-synapse/venv/bin/python /opt/callchat-register/register_service.py
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+ReadOnlyPaths=/etc/callchat-register /opt/callchat-register
+
+[Install]
+WantedBy=multi-user.target

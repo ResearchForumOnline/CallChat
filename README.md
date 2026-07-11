@@ -59,7 +59,7 @@ See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for
 - A runnable Matrix E2EE Zero Bot that refuses unencrypted and allow-all room policies.
 - Durable one-event/one-reply coordination with deterministic Matrix transactions and immediate duplicate-send coalescing.
 - A local Web Crypto ZShield workspace for messages and files, ZME1 interoperability profile, threat model, test vector, and negative tests.
-- A server-backed Synapse reCAPTCHA registration template with rate limits.
+- A same-origin local arithmetic-CAPTCHA registration service with one-time challenges and layered rate limits.
 - Owner-selectable OpenZero, OpenAI, and Groq routing for approved non-secret AI prompts.
 - Optional IonQ hardware-linked `.zqf` factors with local derivation, simulator isolation, and per-job paid-QPU approval.
 - Truthful JSON status schemas for Shield and owner-controlled MatrixRTC/Q Calls.
