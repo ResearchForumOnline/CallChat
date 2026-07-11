@@ -12,11 +12,14 @@ const VAULT_KEY = "callchat.zmath.auto.v1";
 const MODE_KEY = "callchat.zmath.mode.v1";
 const VAULT_ITERATIONS = 600000;
 const MAX_AUTO_FILE_BYTES = 50 * 1024 * 1024;
+const MEDIA_ROOT_DOMAIN = "CallChat-ZMath-Media-Root-v1";
+const MEDIA_ROOM_DOMAIN = "CallChat-ZMath-Media-Room-v1";
 const encoder = new TextEncoder();
 
 let sessionPassphrase = "";
 let sessionPattern = null;
 let sessionPatternName = "";
+let sessionMediaRoot = null;
 let pendingPattern = null;
 let pendingPatternName = "";
 let bypassSend = false;
@@ -24,6 +27,7 @@ let bypassFile = false;
 let busy = false;
 let scanQueued = false;
 const openedBodies = new Map();
+const preparedCallSecrets = new Map();
 
 function bytesToBase64(bytes) {
   let value = "";
@@ -39,6 +43,21 @@ function base64ToBytes(value) {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
+function bytesToBase64Url(bytes) {
+  return bytesToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function joinBytes(...parts) {
+  const length = parts.reduce((total, part) => total + part.length, 0);
+  const output = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    output.set(part, offset);
+    offset += part.length;
+  }
+  return output;
+}
+
 function randomBytes(length) {
   const output = new Uint8Array(length);
   crypto.getRandomValues(output);
@@ -46,7 +65,13 @@ function randomBytes(length) {
 }
 
 function isUnlocked() {
-  return Boolean(sessionPassphrase && sessionPattern && sessionPattern.length);
+  return Boolean(
+    sessionPassphrase &&
+    sessionPattern &&
+    sessionPattern.length &&
+    sessionMediaRoot &&
+    sessionMediaRoot.length === 32
+  );
 }
 
 function isMatrixOnly() {
@@ -55,6 +80,10 @@ function isMatrixOnly() {
 
 function setMatrixOnly(enabled) {
   localStorage.setItem(MODE_KEY, enabled ? "matrix" : "shield");
+  if (enabled) {
+    for (const secret of preparedCallSecrets.values()) secret.fill(0);
+    preparedCallSecrets.clear();
+  }
   updateUi();
 }
 
@@ -119,6 +148,80 @@ async function loadRememberedPattern(passphrase) {
 async function patternFingerprint(bytes) {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
   return Array.from(digest.subarray(0, 8), (value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function deriveMediaRoot(passphrase, patternBytes) {
+  const domain = encoder.encode(MEDIA_ROOT_DOMAIN);
+  const patternHash = new Uint8Array(await crypto.subtle.digest("SHA-256", patternBytes));
+  const saltInput = joinBytes(domain, new Uint8Array([0]), patternHash);
+  const salt = new Uint8Array(await crypto.subtle.digest("SHA-256", saltInput));
+  const passphraseKey = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(passphrase),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const passphraseFactor = new Uint8Array(await crypto.subtle.deriveBits(
+    {name: "PBKDF2", hash: "SHA-256", salt, iterations: VAULT_ITERATIONS},
+    passphraseKey,
+    256
+  ));
+  const ikmBytes = joinBytes(passphraseFactor, new Uint8Array([0]), patternHash);
+  const ikm = await crypto.subtle.importKey("raw", ikmBytes, "HKDF", false, ["deriveBits"]);
+  const root = new Uint8Array(await crypto.subtle.deriveBits(
+    {name: "HKDF", hash: "SHA-256", salt, info: domain},
+    ikm,
+    256
+  ));
+  patternHash.fill(0);
+  saltInput.fill(0);
+  salt.fill(0);
+  passphraseFactor.fill(0);
+  ikmBytes.fill(0);
+  return root;
+}
+
+function assertCallProtectionReady() {
+  if (isMatrixOnly()) {
+    const panel = document.getElementById("zmath-auto-panel");
+    if (panel) panel.hidden = false;
+    toast("Call blocked: turn off Matrix-only mode and unlock ZMath for protected calls.");
+    throw new Error("ZMath media protection is disabled in Matrix-only mode.");
+  }
+  if (!isUnlocked()) {
+    const panel = document.getElementById("zmath-auto-panel");
+    if (panel) panel.hidden = false;
+    toast("Call blocked: unlock ZMath with the shared passphrase and exact pattern image.");
+    throw new Error("ZMath must be unlocked before joining a voice or video call.");
+  }
+}
+
+async function prepareCallSecret(roomId) {
+  assertCallProtectionReady();
+  if (typeof roomId !== "string" || !roomId) throw new Error("The call room ID is unavailable.");
+  const domain = encoder.encode(MEDIA_ROOM_DOMAIN);
+  const room = encoder.encode(roomId);
+  const saltInput = joinBytes(domain, new Uint8Array([0]), room);
+  const salt = new Uint8Array(await crypto.subtle.digest("SHA-256", saltInput));
+  const root = await crypto.subtle.importKey("raw", sessionMediaRoot, "HKDF", false, ["deriveBits"]);
+  const roomKey = new Uint8Array(await crypto.subtle.deriveBits(
+    {name: "HKDF", hash: "SHA-256", salt, info: domain},
+    root,
+    256
+  ));
+  const previous = preparedCallSecrets.get(roomId);
+  if (previous) previous.fill(0);
+  preparedCallSecrets.set(roomId, roomKey);
+  saltInput.fill(0);
+  salt.fill(0);
+}
+
+function requireCallSecret(roomId) {
+  assertCallProtectionReady();
+  const roomKey = preparedCallSecrets.get(roomId);
+  if (!roomKey) throw new Error("The ZMath room media key was not prepared. Call blocked.");
+  return `ZMATHCALL1.${bytesToBase64Url(roomKey)}`;
 }
 
 function downloadBytes(bytes, name, type) {
@@ -242,7 +345,8 @@ function createUi() {
         <button id="zmath-auto-self-test" type="button">Run encryption self-test</button>
         <p id="zmath-auto-self-test-result">Not run in this session.</p>
       </div>
-      <p class="zmath-auto-meta">Profile: <span id="zmath-auto-profile"></span></p>
+      <p class="zmath-auto-meta">Content profile: <span id="zmath-auto-profile"></span></p>
+      <p class="zmath-auto-meta">Call profile: ZMATH-MATRIXRTC-LIVEKIT-1</p>
     </div>`;
   const toastElement = document.createElement("div");
   toastElement.id = "zmath-auto-toast";
@@ -331,12 +435,12 @@ function updateUi() {
   } else if (isUnlocked()) {
     launcher.textContent = "ZMath auto";
     launcher.dataset.state = "ready";
-    state.textContent = "Unlocked. Messages and selected attachments are protected locally before Element sends them.";
+    state.textContent = "Unlocked. Messages, attachments, voice and video use the shared passphrase and exact pattern. Call media keys also rotate through MatrixRTC.";
     state.dataset.state = "ready";
   } else {
     launcher.textContent = "ZMath locked";
     launcher.dataset.state = "locked";
-    state.textContent = "Unlock before sending. Incoming ZMath content opens only while this browser session is unlocked.";
+    state.textContent = "Unlock before sending or calling. Incoming ZMath content and protected call media work only while this browser session is unlocked.";
     state.dataset.state = "locked";
   }
   updatePatternMeta();
@@ -355,9 +459,15 @@ async function unlock() {
     }
   }
   if (!pattern || !pattern.length) throw new Error("Import or generate the exact pattern image first.");
+  const mediaRoot = await deriveMediaRoot(passphrase, pattern);
+  if (sessionPattern) sessionPattern.fill(0);
+  if (sessionMediaRoot) sessionMediaRoot.fill(0);
+  for (const secret of preparedCallSecrets.values()) secret.fill(0);
+  preparedCallSecrets.clear();
   sessionPassphrase = passphrase;
   sessionPattern = pattern.slice();
   sessionPatternName = name;
+  sessionMediaRoot = mediaRoot;
   pendingPattern = null;
   pendingPatternName = "";
   if (document.getElementById("zmath-auto-remember").checked) {
@@ -367,14 +477,18 @@ async function unlock() {
   setMatrixOnly(false);
   updateUi();
   queueIncomingScan();
-  toast("ZMath Auto unlocked for this browser session.");
+  toast("ZMath Auto unlocked for messages, files, voice and video in this browser session.");
 }
 
 function lock() {
   sessionPassphrase = "";
   if (sessionPattern) sessionPattern.fill(0);
+  if (sessionMediaRoot) sessionMediaRoot.fill(0);
   sessionPattern = null;
   sessionPatternName = "";
+  sessionMediaRoot = null;
+  for (const secret of preparedCallSecrets.values()) secret.fill(0);
+  preparedCallSecrets.clear();
   for (const [body, opened] of openedBodies) {
     body.hidden = false;
     opened.remove();
@@ -692,11 +806,14 @@ document.addEventListener("change", (event) => {
 }, true);
 
 window.callchatZMathRequired = true;
+window.callchatZMathCallRequired = true;
 window.callchatZMathAuto = Object.freeze({
   profile: PROFILE,
   isUnlocked,
   isMatrixOnly,
-  prepareFiles
+  prepareFiles,
+  prepareCallSecret,
+  requireCallSecret
 });
 
 new MutationObserver(queueIncomingScan).observe(document.documentElement, {
