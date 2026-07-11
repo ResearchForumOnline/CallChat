@@ -29,13 +29,15 @@ not a hidden proprietary modification of the AGPL web client.
 
 ## Q Call Secure Comms License
 
-Q Call is the commercial CallChat secure-communications offer for teams that want privacy and protection in the quantum age. The standards-based ZME1 browser baseline is public and testable; premium entitlement, managed recovery, enterprise policy, and private ZMath research remain separate.
+Q Call is the commercial CallChat secure-communications offer for teams that want private calls, messages, and protected files on infrastructure they control. The standards-based ZME1 browser baseline is public and testable; premium entitlement, managed recovery, enterprise policy, and private ZMath research remain separate.
 
 - Live license page: [callchat.org/license](https://callchat.org/license/)
 - Pricing: USD $55 per month or USD $550 per year.
 - Scope: unlimited users on one approved public server IP per license.
 - Buyer path: live capture page, direct buy button, and follow-up route for setup questions.
-- Positioning: quantum-ready secure communications with a PQC-ready roadmap, careful security wording, and a private implementation boundary.
+- Current call layer: Matrix/WebRTC with DTLS-SRTP, device identity, and TURN support.
+- Current local protection: the public ZME1 baseline uses PBKDF2-SHA-256 and AES-256-GCM through Web Crypto.
+- Roadmap: reviewed adoption of standardized post-quantum key establishment and signatures; no claim that current live audio is quantum encrypted.
 
 See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for the buyer profile, sales flow, claim wording, and public/private boundary.
 
@@ -84,7 +86,7 @@ Standard Matrix chat can be self-hosted from this repo. The public ZShield basel
 - Calls use Matrix identity plus WebRTC DTLS-SRTP; the hosted deployment can use owner-controlled MatrixRTC authorization and SFU infrastructure.
 - The PQC work is a roadmap. CallChat does not claim that today’s audio packets use post-quantum encryption.
 
-Reproducible evidence and exact limits: [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
+Reproducible evidence and exact limits: [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/capability-boundary.md](docs/capability-boundary.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
 
 ## Architecture
 
