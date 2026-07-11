@@ -1,11 +1,13 @@
 export const FORMAT = "ZME1";
 export const VERSION = 1;
-export const PROFILE = "ZSHIELD-PBKDF2-AESGCM-1";
+export const LEGACY_PROFILE = "ZSHIELD-PBKDF2-AESGCM-1";
+export const PROFILE = "ZMATH-PBKDF2-HKDF-AESGCM-2";
 export const ITERATIONS = 600000;
 export const MAX_ITERATIONS = 1200000;
 export const MAX_PAYLOAD_BYTES = 50 * 1024 * 1024;
 export const MAX_MESSAGE_BYTES = 12 * 1024;
 export const MESSAGE_PREFIX = "ZSHIELD1:";
+const HKDF_INFO = "CallChat-ZMath-ZME1-v2";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8", {fatal: true});
@@ -63,7 +65,7 @@ async function patternDigest(patternBytes) {
   return new Uint8Array(await crypto.subtle.digest("SHA-256", source));
 }
 
-async function deriveKey(passphrase, patternBytes, salt, iterations) {
+async function deriveLegacyKey(passphrase, patternBytes, salt, iterations) {
   if (String(passphrase || "").length < 14) {
     throw new Error("Use a passphrase with at least 14 characters.");
   }
@@ -79,8 +81,48 @@ async function deriveKey(passphrase, patternBytes, salt, iterations) {
   );
 }
 
+async function deriveZMathKey(passphrase, patternBytes, salt, mixSalt, iterations) {
+  if (String(passphrase || "").length < 14) {
+    throw new Error("Use a passphrase with at least 14 characters.");
+  }
+  const passwordInput = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(passphrase),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const passwordFactor = new Uint8Array(await crypto.subtle.deriveBits(
+    {name: "PBKDF2", hash: "SHA-256", salt, iterations},
+    passwordInput,
+    256
+  ));
+  const imageFactor = await patternDigest(patternBytes);
+  const mixedInput = concatBytes([
+    encoder.encode(HKDF_INFO),
+    new Uint8Array([0]),
+    passwordFactor,
+    imageFactor
+  ]);
+  const mixedKey = await crypto.subtle.importKey("raw", mixedInput, "HKDF", false, ["deriveKey"]);
+  passwordFactor.fill(0);
+  mixedInput.fill(0);
+  return crypto.subtle.deriveKey(
+    {name: "HKDF", hash: "SHA-256", salt: mixSalt, info: encoder.encode(HKDF_INFO)},
+    mixedKey,
+    {name: "AES-GCM", length: 256},
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
 function validateHeader(header) {
-  if (!header || header.format !== FORMAT || header.version !== VERSION || header.profile !== PROFILE) {
+  if (
+    !header ||
+    header.format !== FORMAT ||
+    header.version !== VERSION ||
+    ![PROFILE, LEGACY_PROFILE].includes(header.profile)
+  ) {
     throw new Error("Unsupported or invalid ZME1 container.");
   }
   if (!header.payload || !header.kdf || !header.cipher) {
@@ -88,10 +130,29 @@ function validateHeader(header) {
   }
   const iterations = Number(header.kdf.iterations);
   if (
-    header.kdf.name !== "PBKDF2-SHA-256" ||
     !Number.isSafeInteger(iterations) ||
     iterations < ITERATIONS ||
     iterations > MAX_ITERATIONS
+  ) {
+    throw new Error("The container KDF profile is outside the supported bounds.");
+  }
+  if (
+    header.profile === LEGACY_PROFILE &&
+    header.kdf.name !== "PBKDF2-SHA-256"
+  ) {
+    throw new Error("The container KDF profile is outside the supported bounds.");
+  }
+  if (
+    header.profile === PROFILE &&
+    (
+      header.kdf.name !== "PBKDF2-SHA-256+HKDF-SHA-256" ||
+      base64ToBytes(header.kdf.mixSalt).length !== 16
+    )
+  ) {
+    throw new Error("The container KDF profile is outside the supported bounds.");
+  }
+  if (
+    typeof header.kdf.patternRequired !== "boolean"
   ) {
     throw new Error("The container KDF profile is outside the supported bounds.");
   }
@@ -124,6 +185,7 @@ export async function protectPayload(options) {
   }
   const patternBytes = options.patternBytes || new Uint8Array();
   const salt = randomBytes(16);
+  const mixSalt = randomBytes(16);
   const iv = randomBytes(12);
   const header = {
     format: FORMAT,
@@ -137,9 +199,10 @@ export async function protectPayload(options) {
     },
     createdAt: options.createdAt || new Date().toISOString(),
     kdf: {
-      name: "PBKDF2-SHA-256",
+      name: "PBKDF2-SHA-256+HKDF-SHA-256",
       iterations: ITERATIONS,
       salt: bytesToBase64(salt),
+      mixSalt: bytesToBase64(mixSalt),
       patternRequired: patternBytes.length > 0
     },
     cipher: {
@@ -159,7 +222,7 @@ export async function protectPayload(options) {
     }
   }
   validateHeader(header);
-  const key = await deriveKey(options.passphrase, patternBytes, salt, ITERATIONS);
+  const key = await deriveZMathKey(options.passphrase, patternBytes, salt, mixSalt, ITERATIONS);
   const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
     {name: "AES-GCM", iv, additionalData: encoder.encode(canonical(header)), tagLength: 128},
     key,
@@ -181,12 +244,20 @@ export async function openContainerPayload(options) {
   if (ciphertext.length !== Number(header.payload.size) + 16) {
     throw new Error("Authenticated payload size does not match the header.");
   }
-  const key = await deriveKey(
-    options.passphrase,
-    patternBytes,
-    base64ToBytes(header.kdf.salt),
-    Number(header.kdf.iterations)
-  );
+  const key = header.profile === LEGACY_PROFILE
+    ? await deriveLegacyKey(
+      options.passphrase,
+      patternBytes,
+      base64ToBytes(header.kdf.salt),
+      Number(header.kdf.iterations)
+    )
+    : await deriveZMathKey(
+      options.passphrase,
+      patternBytes,
+      base64ToBytes(header.kdf.salt),
+      base64ToBytes(header.kdf.mixSalt),
+      Number(header.kdf.iterations)
+    );
   let plaintext;
   try {
     plaintext = new Uint8Array(await crypto.subtle.decrypt(

@@ -186,7 +186,13 @@ CallChat Shield / ZMath is an optional premium vault layer for protected files a
 
 It publishes the standards-based ZME1 reference implementation, but not proprietary premium policy or private ZMath research. See [docs/zmath-boundary.md](docs/zmath-boundary.md), [docs/ionq-research-receipts.md](docs/ionq-research-receipts.md), and [docs/matrix-captcha-registration.md](docs/matrix-captcha-registration.md).
 
-The current public offer is the Q Call secure-comms license: USD $55/month or USD $550/year for unlimited users on one approved public server IP. The public repo can describe the offer, customer flow, and safe integration points; private entitlement logic and Shield/ZMath implementation stay outside GitHub.
+The current public offer is the Q Call secure-comms license: USD $55/month or USD $550/year for unlimited users on one approved public server IP. The public repo documents the offer, customer flow, public cryptographic baseline, and safe integration points; private research, credentials, entitlement logic, and managed recovery stay outside GitHub.
+
+The hosted Element experience now has a reviewable, no-AI-API ZMath Auto
+controller for protecting composer messages and selected files in the browser.
+Its standards-based cryptographic profile and integration contract are public;
+private research, entitlement services, credentials, and managed recovery remain
+outside this repository. See [ZMath Auto for Element](docs/zmath-auto-element.md).
 
 ## License
 
