@@ -5,20 +5,16 @@ pattern image for voice calls, video calls, and screen sharing. This is an
 additional factor layered into the existing MatrixRTC and LiveKit frame E2EE
 path, not a replacement for it.
 
-## Key hierarchy
+## Protection model
 
-1. The browser hashes the exact pattern image with SHA-256.
-2. It combines that hash with the passphrase using PBKDF2-SHA-256 at 600,000
-   iterations and HKDF-SHA-256 to create a session media root.
-3. HKDF-SHA-256 derives a distinct 256-bit factor for each Matrix room.
-4. The embedded call engine HKDF-mixes that factor with every rotating
-   MatrixRTC sender key, participant identity, and key index.
-5. LiveKit's frame E2EE worker uses the resulting key material for audio,
-   video, and screen-sharing frames.
+The browser prepares a room-scoped media factor from the shared passphrase and
+exact pattern. The embedded call engine combines that factor with the rotating
+MatrixRTC media-key path before LiveKit frame encryption is applied to audio,
+video, and screen sharing.
 
-Both the ZMath room factor and the normal rotating MatrixRTC key are required.
-A different passphrase, pattern, room, participant, sender key, or key index
-produces different media key material.
+Both the ZMath factor and the normal MatrixRTC media context are required. This
+keeps the additional factor layered on top of the established call stack
+without publishing private ZMath policy or deployment material.
 
 ## Secret handling
 

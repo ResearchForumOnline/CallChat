@@ -35,8 +35,8 @@ Q Call is the commercial CallChat secure-communications offer for teams that wan
 - Pricing: USD $55 per month or USD $550 per year.
 - Scope: unlimited users on one approved public server IP per license.
 - Buyer path: live capture page, direct buy button, and follow-up route for setup questions.
-- Current call layer: Matrix/WebRTC with DTLS-SRTP, device identity, and TURN support.
-- Current local protection: the public ZME1 baseline uses PBKDF2-SHA-256 and AES-256-GCM through Web Crypto.
+- Current call layer: hosted CallChat web calls use MatrixRTC/LiveKit frame E2EE with a required in-memory ZMath factor; WebRTC transport protection and TURN remain in the path.
+- Current local protection: the public ZME1 baseline creates an authenticated AES-256-GCM container in the browser before Matrix uploads the file.
 - Roadmap: reviewed adoption of standardized post-quantum key establishment and signatures; no claim that current live audio is quantum encrypted.
 
 See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for the buyer profile, sales flow, claim wording, and public/private boundary.
@@ -75,7 +75,7 @@ This public repository does not include private deployment material:
 - Production backups.
 - Private entitlement or licensing code.
 
-Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline uses PBKDF2-SHA-256 and AES-256-GCM through Web Crypto for local messages and `.zme1` files; it is not the private premium ZMath layer and it does not claim live audio is quantum encrypted.
+Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline creates authenticated local messages and `.zme1` files through Web Crypto; it is not the private premium ZMath policy layer and it does not claim live audio is quantum encrypted.
 
 ## Verified Security Baseline
 
@@ -83,10 +83,39 @@ Standard Matrix chat can be self-hosted from this repo. The public ZShield basel
 - Zero Bot uses `matrix-nio[e2e]` with a persistent Olm/Megolm store and explicitly approved rooms.
 - ZShield encrypts chat messages, files, or vault notes locally before users paste the envelope or attach the `.zme1` container.
 - Optional IonQ simulator receipts authenticate research context only; they never supply ZShield keys or receive plaintext.
-- Calls use Matrix identity plus WebRTC DTLS-SRTP; the hosted deployment can use owner-controlled MatrixRTC authorization and SFU infrastructure.
+- Hosted CallChat web calls require the unlocked ZMath factor and combine it in memory with rotating MatrixRTC media keys before LiveKit frame encryption. The legacy one-to-one fallback is disabled in the hosted profile.
 - The PQC work is a roadmap. CallChat does not claim that today’s audio packets use post-quantum encryption.
 
 Reproducible evidence and exact limits: [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/capability-boundary.md](docs/capability-boundary.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
+
+## Layered File Protection
+
+When ZMath protection is enabled, the original file is wrapped locally before
+Matrix applies its own encrypted attachment and room-event layers:
+
+```text
+Original document
+        |
+        v
+ZMath passphrase + exact pattern
+        |
+        v
+Authenticated AES-256-GCM ZME1 container
+filename.docx.zme1
+        |
+        v
+Matrix A256CTR encrypted attachment
+        |
+        v
+Megolm-encrypted room event
+        |
+        v
+CallChat infrastructure receives encrypted payloads
+```
+
+This is layered client-side protection, not a claim that all service metadata
+disappears. See [Layered file protection](docs/LAYERED_FILE_PROTECTION.md) for
+the security boundary and limits.
 
 ## Architecture
 
@@ -169,6 +198,10 @@ Users can connect with:
 - Official Element Android/iOS/desktop clients.
 - Other compatible Matrix clients.
 - Future CallChat-native clients.
+
+Standard Matrix messaging remains compatible. ZMath-protected hosted calls
+require the matching CallChat web client because unmodified clients do not
+implement the additional media factor.
 
 For security and licensing hygiene, this repo configures and themes upstream Element Web instead of hiding upstream code inside CallChat.
 
