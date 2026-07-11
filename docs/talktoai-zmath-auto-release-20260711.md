@@ -1,5 +1,9 @@
 # ZMath Automatic Protection Release - 2026-07-11
 
+> Historical record: the receipt-only IonQ route described below was
+> superseded later on 2026-07-11 by the hardware-linked factor protocol in
+> [Operational IonQ QPU Factor](ionq-assurance-receipts.md).
+
 TalkToAI ZMath now supports a one-click local setup and automatic file workflow at
 `https://talktoai.org/zmath/portable/` and `https://talktoai.org/zmath/exclusive/`.
 

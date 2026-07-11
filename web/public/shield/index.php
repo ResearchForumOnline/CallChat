@@ -109,8 +109,9 @@
         </div>
         <p class="notice">
           The hosted MVP uses reviewable standard Web Crypto primitives. Premium entitlement, managed recovery,
-          enterprise policy, and managed recovery remain separate from this security baseline. An optional
-          provider-isolated IonQ assurance receipt can be authenticated as evidence, but never supplies encryption keys.
+          enterprise policy, and managed recovery remain separate from this security baseline. Owners can optionally
+          add a separately held IonQ hardware-linked factor that is required by the selected ZShield KDF profile.
+          It is not QKD or a claim that IonQ performs encryption.
         </p>
       </section>
 

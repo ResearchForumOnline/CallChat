@@ -1,9 +1,9 @@
-# Owner-Managed AI and Quantum Assurance
+# Owner-Managed AI and QPU Factor Control
 
 CallChat can route approved site-agent and assurance work through a local
-OpenZero service, OpenAI, or Groq. The server owner also chooses whether IonQ
-assurance receipts are disabled, submitted to the simulator, or submitted to
-an explicitly approved QPU backend.
+OpenZero service, OpenAI, or Groq. Separately, the owner can use IonQ to create
+a hardware-linked `.zqf` encryption factor or run the same contract against the
+simulator without enabling the production hardware profile.
 
 The provider lane is separate from the encryption lane. It does not receive
 ZMath passphrases, exact pattern images, Matrix keys, call media factors,
@@ -18,28 +18,26 @@ phrases are routed to local OpenZero instead of a cloud AI provider.
 | OpenZero | Local, owner-controlled AI and fallback replies | Default |
 | OpenAI | Hosted model route for approved non-secret prompts | Model and enable state |
 | Groq | Low-latency hosted model route for approved non-secret prompts | Model and enable state |
-| IonQ | Quantum job receipt for a non-secret assurance commitment | Backend and paid-QPU approval |
+| IonQ | Hardware result contribution for a browser-derived `.zqf` factor | Backend, paid-QPU permission, and per-job approval |
 
 `ai/provider_control.py` provides the reference implementation. Provider URLs
 are fixed in code, model IDs and backend IDs are validated, and API keys are
 kept server-side. Public status responses contain only configured and enabled
 state, never the key value or a derivative of it.
 
-## AI + IonQ Assurance Flow
+## IonQ Factor Flow
 
-1. CallChat builds a non-secret manifest describing the enabled protection
-   layers and provider-isolation controls.
-2. The selected AI route reviews only that manifest and returns a concise
-   operator check.
-3. CallChat serializes the manifest and review and creates a SHA-256
+1. The owner browser creates a 256-bit local nonce and submits only its SHA-256
    commitment.
-4. IonQ receives the commitment as job metadata with a small QIS circuit.
-5. CallChat records the IonQ job ID, backend, status, and commitment as the
-   assurance receipt.
+2. The service submits a bounded QIS circuit to the configured IonQ backend.
+3. On completion, the service validates the result and returns a
+   domain-separated measurement digest and job evidence.
+4. The browser verifies the commitment and derives the `.zqf` factor locally
+   with HKDF-SHA-512.
+5. ZShield and ZMath require that factor when a QPU-factor profile is selected.
 
-Encryption does not wait for or depend on the provider result. The receipt is
-an auditable assurance record around the security controls; client-side ZShield
-and Matrix encryption continue independently.
+The AI routes are not in this key path. The final factor, local nonce, content,
+and ZMath recovery inputs are never sent to AI providers or IonQ.
 
 ## Environment Configuration
 
@@ -69,7 +67,8 @@ provider model-list test before activating a hosted route.
   write checks.
 - Keep provider APIs on fixed allowlisted endpoints; do not accept arbitrary
   provider URLs from a browser form.
-- Require a separate owner confirmation before enabling a paid IonQ QPU.
+- Require saved owner permission and a separate confirmation for every paid
+  IonQ QPU job.
 - Do not log provider keys, visitor prompts, passphrases, patterns, Matrix keys,
   ZME1 content, or protected payloads.
 - Rotate a provider key immediately if it appears in a room, screenshot, log,

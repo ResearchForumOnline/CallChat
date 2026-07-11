@@ -1,5 +1,9 @@
 # CallChat Security Release Evidence - 2026-07-10
 
+> Historical record: the simulator receipt described here was later superseded
+> by the optional operational QPU-factor profile. See
+> [Operational QPU Factor Release Evidence](release-evidence-20260711-qpu-factor.md).
+
 This note records the public, reproducible evidence for the July 2026 security baseline. It intentionally contains no credentials, server addresses, room identifiers, access tokens, signing keys, or private deployment paths.
 
 ## Shipped Baseline

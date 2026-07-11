@@ -3,6 +3,7 @@ import {readFile} from "node:fs/promises";
 
 import {
   PROFILE,
+  QPU_FACTOR_PROFILE,
   containerFingerprint,
   decodeMessageContainer,
   openContainerPayload,
@@ -103,6 +104,61 @@ const alteredEnvelope = shieldedMessage.envelope.slice(0, -2) + "AA";
 await assert.rejects(
   openMessage({envelope: alteredEnvelope, passphrase, patternBytes: pattern}),
   /malformed|Authentication failed/
+);
+
+const qpuFactor = new TextEncoder().encode("browser-local-plus-qpu-derived-factor-v1");
+const qpuContainer = await protectPayload({
+  bytes: plaintext,
+  name: "qpu-factor-evidence.txt",
+  type: "text/plain",
+  kind: "file",
+  passphrase,
+  patternBytes: pattern,
+  quantumFactorBytes: qpuFactor,
+  createdAt: "2026-07-11T00:00:00Z",
+  context: {
+    purpose: "matrix-file",
+    zmathPolicy: "ZMath-Shield-Policy-1",
+    transport: "Matrix-E2EE",
+    qpuBackend: "qpu.forte-1",
+    qpuJob: "019f52ea-8506-74f8-acb1-2699c0a8fcec",
+    qpuEvidenceDigest: "d".repeat(128)
+  }
+});
+assert.equal(qpuContainer.header.profile, QPU_FACTOR_PROFILE);
+assert.equal(qpuContainer.header.kdf.quantumFactorRequired, true);
+assert.match(qpuContainer.header.kdf.quantumFactorCommitment, /^[a-f0-9]{64}$/);
+const qpuOpened = await openContainerPayload({
+  container: qpuContainer,
+  passphrase,
+  patternBytes: pattern,
+  quantumFactorBytes: qpuFactor
+});
+assert.deepEqual(qpuOpened.bytes, plaintext);
+await assert.rejects(
+  openContainerPayload({container: qpuContainer, passphrase, patternBytes: pattern}),
+  /separate QPU factor file/
+);
+await assert.rejects(
+  openContainerPayload({
+    container: qpuContainer,
+    passphrase,
+    patternBytes: pattern,
+    quantumFactorBytes: new TextEncoder().encode("wrong-independent-factor")
+  }),
+  /does not match/
+);
+
+const qpuHeaderTamper = structuredClone(qpuContainer);
+qpuHeaderTamper.header.context.qpuJob = "019f52ea-8506-74f8-acb1-2699c0a8fced";
+await assert.rejects(
+  openContainerPayload({
+    container: qpuHeaderTamper,
+    passphrase,
+    patternBytes: pattern,
+    quantumFactorBytes: qpuFactor
+  }),
+  /Authentication failed/
 );
 
 console.log("ZShield file and message round-trip, tamper, factor and resource-bound tests: ok");
