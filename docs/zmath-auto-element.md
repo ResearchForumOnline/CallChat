@@ -43,6 +43,22 @@ is shown once in the setup panel and must be stored separately from the pattern.
 `Run encryption self-test` performs an authenticated random-payload round trip
 with the current factors without uploading plaintext.
 
+## Message rendering
+
+Encrypted `ZSHIELD1` envelopes are hidden as soon as the client recognizes
+them. The renderer creates one local display per Matrix event, marks an event
+while decryption is in flight, opens newest messages first with bounded
+concurrency, and replaces the placeholder in place. A mutation caused by the
+local display cannot start a second decryption for the same event.
+
+If the active profile does not match, the client shows one compact protected
+message notice instead of exposing the full envelope. A profile-generation
+counter prevents a decryption started under an old profile from appearing
+after the user locks, resets, or changes profiles.
+
+The one-time recovery code is removed from the DOM after it is copied, hidden
+on request, and automatically cleared after 90 seconds.
+
 ## How to verify an uploaded file
 
 After Matrix decrypts an event, a ZMath-protected attachment should have:

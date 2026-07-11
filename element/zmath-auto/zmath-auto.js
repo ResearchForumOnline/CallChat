@@ -38,10 +38,14 @@ let bypassSend = false;
 let bypassFile = false;
 let busy = false;
 let scanQueued = false;
+let scanAgain = false;
 let setupBusy = false;
 let automaticRestore = null;
 let trustedProfileAvailable = false;
+let profileEpoch = 0;
+let recoveryTimer = null;
 const openedBodies = new Map();
+const openingBodies = new WeakSet();
 const preparedCallSecrets = new Map();
 
 function bytesToBase64(bytes) {
@@ -478,6 +482,7 @@ async function activateProfile(passphrase, pattern, name, {trusted = false, quan
     evidenceDigest: parsedFactor.evidenceDigest
   } : null;
   sessionQuantumFactorFile = quantumFactorFile || null;
+  profileEpoch += 1;
   pendingPattern = null;
   pendingPatternName = "";
   pendingQuantumFactorFile = null;
@@ -508,6 +513,8 @@ async function createAutomaticSetup() {
     const recoveryCode = document.getElementById("zmath-auto-recovery-code");
     recovery.hidden = false;
     recoveryCode.textContent = passphrase;
+    clearTimeout(recoveryTimer);
+    recoveryTimer = setTimeout(hideRecoveryCode, 90000);
     toast("Automatic protection is active. Save the recovery passphrase separately from the downloaded pattern.");
   } finally {
     setupBusy = false;
@@ -565,10 +572,11 @@ function createUi() {
         <p id="zmath-auto-device-state">One action creates a protected profile and restores it automatically in this trusted browser.</p>
       </div>
       <div class="zmath-auto-recovery" id="zmath-auto-recovery" hidden>
-        <strong>Save this passphrase now</strong>
-        <code id="zmath-auto-recovery-code"></code>
-        <button id="zmath-auto-copy-recovery" type="button">Copy passphrase</button>
-        <small>It is shown once here. Keep it separately from the downloaded pattern image for recovery and approved device sharing.</small>
+          <strong>Save this passphrase now</strong>
+          <code id="zmath-auto-recovery-code"></code>
+          <button id="zmath-auto-copy-recovery" type="button">Copy passphrase</button>
+          <button id="zmath-auto-hide-recovery" type="button">Hide recovery code</button>
+          <small>It is shown once here. Keep it separately from the downloaded pattern image for recovery and approved device sharing.</small>
       </div>
       <details class="zmath-auto-advanced" id="zmath-auto-advanced">
         <summary>Advanced options</summary>
@@ -637,8 +645,10 @@ function createUi() {
     const value = document.getElementById("zmath-auto-recovery-code").textContent || "";
     if (!value) return;
     await navigator.clipboard.writeText(value);
+    hideRecoveryCode();
     toast("Passphrase copied. Store it separately from the pattern image.");
   });
+  document.getElementById("zmath-auto-hide-recovery").addEventListener("click", hideRecoveryCode);
   document.getElementById("zmath-auto-generate-pass").addEventListener("click", () => {
     const passphrase = generatePassphrase();
     document.getElementById("zmath-auto-passphrase").value = passphrase;
@@ -727,6 +737,15 @@ function updateQuantumMeta(evidence = sessionQuantumEvidence, name = "") {
   element.textContent = `${name ? `${name} · ` : ""}IonQ ${evidence.backend} hardware factor · job ${job}`;
 }
 
+function hideRecoveryCode() {
+  clearTimeout(recoveryTimer);
+  recoveryTimer = null;
+  const recovery = document.getElementById("zmath-auto-recovery");
+  const code = document.getElementById("zmath-auto-recovery-code");
+  if (code) code.textContent = "";
+  if (recovery) recovery.hidden = true;
+}
+
 function updateUi() {
   const launcher = document.getElementById("zmath-auto-launcher");
   const state = document.getElementById("zmath-auto-state");
@@ -809,6 +828,8 @@ async function unlock() {
 }
 
 function lock() {
+  profileEpoch += 1;
+  hideRecoveryCode();
   sessionPassphrase = "";
   if (sessionPattern) sessionPattern.fill(0);
   if (sessionMediaRoot) sessionMediaRoot.fill(0);
@@ -1029,10 +1050,44 @@ async function prepareFiles(files) {
   return output;
 }
 
-async function openIncomingBody(body) {
-  if (!isUnlocked() || openedBodies.has(body)) return;
-  const envelope = body.innerText.trim();
-  if (!envelope.startsWith(MESSAGE_PREFIX)) return;
+function openedDisplayFor(body) {
+  let display = openedBodies.get(body);
+  if (display && display.isConnected) return display;
+  openedBodies.delete(body);
+  const adjacent = [];
+  let sibling = body.nextElementSibling;
+  while (sibling && sibling.classList.contains("zmath-auto-opened")) {
+    adjacent.push(sibling);
+    sibling = sibling.nextElementSibling;
+  }
+  display = adjacent.shift() || document.createElement("div");
+  for (const duplicate of adjacent) duplicate.remove();
+  display.className = "zmath-auto-opened";
+  if (!display.isConnected) body.insertAdjacentElement("afterend", display);
+  openedBodies.set(body, display);
+  return display;
+}
+
+function stageIncomingBody(body) {
+  if (!isUnlocked() || openingBodies.has(body)) return null;
+  const existing = openedBodies.get(body);
+  if (existing && existing.isConnected) {
+    if (existing.dataset.state === "opened" || existing.dataset.state === "opening") return null;
+    if (existing.dataset.state === "locked" && Number(existing.dataset.profileEpoch) === profileEpoch) return null;
+  }
+  const envelope = String(body.textContent || "").trim();
+  if (!envelope.startsWith(MESSAGE_PREFIX)) return null;
+  openingBodies.add(body);
+  const display = openedDisplayFor(body);
+  display.dataset.state = "opening";
+  display.dataset.profileEpoch = String(profileEpoch);
+  display.textContent = "Opening protected message...";
+  body.hidden = true;
+  return {body, display, envelope, epoch: profileEpoch};
+}
+
+async function openStagedBody(staged) {
+  const {body, display, envelope, epoch} = staged;
   try {
     const opened = await openMessage({
       envelope,
@@ -1040,24 +1095,50 @@ async function openIncomingBody(body) {
       patternBytes: sessionPattern,
       quantumFactorBytes: sessionQuantumFactor
     });
-    const display = document.createElement("div");
-    display.className = "zmath-auto-opened";
+    if (epoch !== profileEpoch || !isUnlocked() || !body.isConnected) {
+      display.remove();
+      openedBodies.delete(body);
+      if (body.isConnected) body.hidden = false;
+      return;
+    }
     display.textContent = opened.message;
-    body.hidden = true;
-    body.insertAdjacentElement("afterend", display);
-    openedBodies.set(body, display);
+    display.dataset.state = "opened";
   } catch {
-    // A room may contain content protected with another pattern. Leave its envelope intact.
+    if (epoch === profileEpoch && body.isConnected) {
+      display.textContent = "Protected ZMath message. Unlock the matching shared profile to open it.";
+      display.dataset.state = "locked";
+      display.dataset.profileEpoch = String(profileEpoch);
+    }
+  } finally {
+    openingBodies.delete(body);
   }
 }
 
+async function runIncomingScan() {
+  do {
+    scanAgain = false;
+    const staged = Array.from(document.querySelectorAll(".mx_EventTile_body, .mx_MTextBody"))
+      .reverse()
+      .map(stageIncomingBody)
+      .filter(Boolean);
+    for (let offset = 0; offset < staged.length; offset += 2) {
+      await Promise.all(staged.slice(offset, offset + 2).map(openStagedBody));
+    }
+  } while (scanAgain && isUnlocked());
+}
+
 function queueIncomingScan() {
-  if (scanQueued || !isUnlocked()) return;
+  if (!isUnlocked()) return;
+  if (scanQueued) {
+    scanAgain = true;
+    return;
+  }
   scanQueued = true;
-  requestAnimationFrame(async () => {
-    scanQueued = false;
-    const bodies = document.querySelectorAll(".mx_EventTile_body, .mx_MTextBody");
-    for (const body of bodies) await openIncomingBody(body);
+  requestAnimationFrame(() => {
+    runIncomingScan().catch(showError).finally(() => {
+      scanQueued = false;
+      if (scanAgain && isUnlocked()) queueIncomingScan();
+    });
   });
 }
 
@@ -1151,7 +1232,7 @@ document.addEventListener("change", (event) => {
 window.callchatZMathRequired = true;
 window.callchatZMathCallRequired = true;
 window.callchatZMathAuto = Object.freeze({
-  version: "2026.07.11-qfactor1",
+  version: "2026.07.11-renderer1",
   profile: PROFILE,
   isUnlocked,
   isMatrixOnly,
