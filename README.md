@@ -59,7 +59,8 @@ See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for
 - A runnable Matrix E2EE Zero Bot that refuses unencrypted and allow-all room policies.
 - A local Web Crypto ZShield workspace for messages and files, ZME1 interoperability profile, threat model, test vector, and negative tests.
 - A server-backed Synapse reCAPTCHA registration template with rate limits.
-- An optional server-side IonQ simulator receipt endpoint that stays outside the encryption key path.
+- Owner-selectable OpenZero, OpenAI, and Groq routing for approved non-secret AI prompts.
+- Provider-isolated IonQ assurance receipts with simulator default and explicit paid-QPU approval.
 - Truthful JSON status schemas for Shield and owner-controlled MatrixRTC/Q Calls.
 
 ## What This Repo Does Not Include
@@ -75,18 +76,19 @@ This public repository does not include private deployment material:
 - Production backups.
 - Private entitlement or licensing code.
 
-Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline creates authenticated local messages and `.zme1` files through Web Crypto; it is not the private premium ZMath policy layer and it does not claim live audio is quantum encrypted.
+Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline creates authenticated local messages and `.zme1` files through Web Crypto. The hosted protected-call profile adds a required in-memory ZMath factor to rotating MatrixRTC media keys before LiveKit frame encryption.
 
 ## Verified Security Baseline
 
 - Current CallChat rooms are configured with Matrix Megolm E2EE. Encryption protects new encrypted events; it does not retroactively encrypt earlier room history.
 - Zero Bot uses `matrix-nio[e2e]` with a persistent Olm/Megolm store and explicitly approved rooms.
 - ZShield encrypts chat messages, files, or vault notes locally before users paste the envelope or attach the `.zme1` container.
-- Optional IonQ simulator receipts authenticate research context only; they never supply ZShield keys or receive plaintext.
+- AI providers receive only approved non-secret prompts; ZMath factors, Matrix keys, and protected-message or file plaintext stay outside the provider lane.
+- IonQ assurance receipts bind a SHA-256 commitment to a quantum job ID; IonQ never supplies ZShield keys or receives plaintext.
 - Hosted CallChat web calls require the unlocked ZMath factor and combine it in memory with rotating MatrixRTC media keys before LiveKit frame encryption. The legacy one-to-one fallback is disabled in the hosted profile.
-- The PQC work is a roadmap. CallChat does not claim that today’s audio packets use post-quantum encryption.
+- Quantum assurance remains isolated from the media key path; standardized post-quantum key establishment and signatures are the controlled upgrade track.
 
-Reproducible evidence and exact limits: [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/capability-boundary.md](docs/capability-boundary.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
+Reproducible evidence and exact limits: [AI + quantum control release evidence](docs/release-evidence-20260711-ai-quantum-control.md), [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/capability-boundary.md](docs/capability-boundary.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
 
 ## Layered File Protection
 
@@ -232,7 +234,7 @@ CallChat Shield / ZMath is an optional premium vault layer for protected files a
 - Licensing model.
 - What clients should show when a Shield file is present.
 
-It publishes the standards-based ZME1 reference implementation, but not proprietary premium policy or private ZMath research. See [docs/zmath-boundary.md](docs/zmath-boundary.md), [docs/ionq-research-receipts.md](docs/ionq-research-receipts.md), and [docs/matrix-captcha-registration.md](docs/matrix-captcha-registration.md).
+It publishes the standards-based ZME1 reference implementation, but not proprietary premium policy or private ZMath research. See [docs/zmath-boundary.md](docs/zmath-boundary.md), [docs/owner-provider-control.md](docs/owner-provider-control.md), [docs/ionq-assurance-receipts.md](docs/ionq-assurance-receipts.md), and [docs/matrix-captcha-registration.md](docs/matrix-captcha-registration.md).
 
 The current public offer is the Q Call secure-comms license: USD $55/month or USD $550/year for unlimited users on one approved public server IP. The public repo documents the offer, customer flow, public cryptographic baseline, and safe integration points; private research, credentials, entitlement logic, and managed recovery stay outside GitHub.
 

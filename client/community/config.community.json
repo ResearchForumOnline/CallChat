@@ -27,7 +27,7 @@
     "breadcrumbs": true,
     "UIFeature.voip": true,
     "UIFeature.widgets": true,
-    "UIFeature.registration": false,
+    "UIFeature.registration": true,
     "UIFeature.passwordReset": false
   },
   "branding": {

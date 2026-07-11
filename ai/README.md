@@ -36,6 +36,24 @@ POST http://127.0.0.1:11434/v1/chat/completions
 
 Use your own endpoint and model. Keep API keys and bot tokens out of this repo.
 
+## Owner-Selectable Providers
+
+The reference bridge can keep OpenZero as the local default or route approved
+non-secret prompts through OpenAI or Groq. IonQ is a separate assurance route:
+it receives only a commitment and returns a quantum job receipt.
+
+- Set `CALLCHAT_AI_PROVIDER` to `local`, `openai`, or `groq`.
+- Set the matching server-side key and model variables from
+  `zero-agent-bridge.example.env`.
+- Keep `CALLCHAT_IONQ_BACKEND=simulator` unless the owner explicitly approves
+  paid QPU use.
+- Never send room secrets, ZMath factors, Matrix keys, or protected-room
+  plaintext through a cloud provider route.
+- The reference bridge detects common assigned-secret patterns and forces those
+  prompts onto local OpenZero.
+
+See [Owner-Managed AI and Quantum Assurance](../docs/owner-provider-control.md).
+
 ## Website Agent Bridge
 
 This repo includes a small dependency-free example:

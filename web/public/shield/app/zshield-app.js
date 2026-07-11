@@ -5,6 +5,7 @@ import * as ShieldCore from "./zshield-core.js";
 
   const FORMAT = "ZME1";
   const VERSION = 1;
+  const PROFILE = "ZSHIELD-PBKDF2-AESGCM-1";
   const ITERATIONS = 600000;
   const MAX_BYTES = 50 * 1024 * 1024;
   const encoder = new TextEncoder();
@@ -122,7 +123,7 @@ import * as ShieldCore from "./zshield-core.js";
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.receipt) {
-      throw new Error(result.error && result.error.message || "IonQ research receipt is unavailable.");
+      throw new Error(result.error && result.error.message || "IonQ assurance receipt is unavailable.");
     }
     return String(result.receipt);
   }

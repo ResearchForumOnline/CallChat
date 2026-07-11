@@ -9,7 +9,7 @@ This note records the public, reproducible evidence for the July 2026 security b
 - The hosted Element profile prefers owner-controlled MatrixRTC authorization and SFU infrastructure for calls.
 - The ZShield browser workspace protects messages, files, and vault notes locally as authenticated ZME1 containers.
 - Public account creation can use Synapse's server-backed reCAPTCHA UI-authentication stage plus registration rate limits.
-- An optional server-side IonQ v0.4 simulator hook can issue research receipts; it is not encryption key material and receives no plaintext.
+- An optional server-side IonQ v0.4 simulator hook can issue assurance receipts; it remains outside encryption key material and receives no plaintext.
 - Public AI security and call answers read state-backed status rather than repeating generic product copy.
 
 Room encryption is not retroactive. Messages sent before encryption was enabled keep their original historical protection state.

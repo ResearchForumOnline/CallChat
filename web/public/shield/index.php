@@ -109,8 +109,8 @@
         </div>
         <p class="notice">
           The hosted MVP uses reviewable standard Web Crypto primitives. Premium entitlement, managed recovery,
-          enterprise policy, and experimental quantum research remain separate from this security baseline. An
-          optional IonQ simulator receipt can be authenticated as evidence, but never supplies encryption keys.
+          enterprise policy, and managed recovery remain separate from this security baseline. An optional
+          provider-isolated IonQ assurance receipt can be authenticated as evidence, but never supplies encryption keys.
         </p>
       </section>
 
@@ -181,4 +181,3 @@
     <script src="/assets/zero-live-agent.js?v=20260709-product2" defer></script>
   </body>
 </html>
-

@@ -10,20 +10,23 @@
     "owner_controlled_sfu": "active"
   },
   "q_call_layer": {
-    "status": "operational_secure_call_baseline",
-    "scope": "Owner-controlled MatrixRTC, Matrix device identity, DTLS-SRTP media, TURN fallback, Shield status, and a PQC-ready research roadmap",
-    "user_experience": "Users start calls in the hosted CallChat Element client, which now prefers the local Element Call widget and owner-controlled MatrixRTC backend."
+    "status": "zshield_protected_call_path_active",
+    "scope": "Owner-controlled MatrixRTC, self-hosted LiveKit, Matrix device identity, DTLS-SRTP, TURN, frame encryption, and a required in-memory ZMath room factor",
+    "user_experience": "The hosted CallChat Shield client blocks protected calls until ZMath is unlocked and a room-scoped media factor is prepared."
   },
-  "ionq_research_hook": {
-    "status": "server_side_optional",
+  "ai_quantum_assurance": {
+    "status": "owner_configurable",
+    "ai_routes": ["OpenZero", "OpenAI", "Groq"],
+    "ionq_backends": "simulator or owner-approved QPU",
     "public_api_key": false,
     "browser_secret_exposure": false,
-    "purpose": "Future approved quantum-assisted experiments, call policy attestation, or research evidence. Not required for ordinary calls."
+    "purpose": "Review a non-secret ZShield manifest, hash the assurance record, and bind that commitment to an IonQ quantum job receipt."
   },
-  "claims_boundary": [
-    "CallChat does not claim live audio packets are quantum encrypted today.",
-    "Q-Calls must be described as Matrix/WebRTC secure calls with a PQC-ready and optional IonQ research layer.",
-    "No IonQ API keys, ZMath private code, Shield secrets, Matrix signing keys, or recovery material are published here."
+  "provider_boundary": [
+    "Live media protection and ZMath factor derivation remain inside the CallChat client.",
+    "AI receives only the non-secret assurance manifest.",
+    "IonQ receives only a SHA-256 commitment and returns a job receipt.",
+    "No assurance provider receives another provider's key, a ZMath factor, a Matrix key, call plaintext, or protected-message or file plaintext."
   ],
   "links": {
     "q_calls": "https://callchat.org/quantum-calls/",

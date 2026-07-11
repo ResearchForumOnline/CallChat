@@ -33,8 +33,8 @@ jobs:
 
       - name: IonQ receipt boundary
         run: |
-          python3 -m py_compile ai/zero_agent_bridge.py ai/test_zero_agent_bridge.py
-          python3 -m unittest ai/test_zero_agent_bridge.py -v
+          python3 -m py_compile ai/provider_control.py ai/zero_agent_bridge.py ai/test_provider_control.py ai/test_zero_agent_bridge.py
+          python3 -m unittest discover -s ai -p 'test_*.py' -v
 
       - name: Public JSON validation
         run: |
