@@ -1114,11 +1114,23 @@ async function openStagedBody(staged) {
   }
 }
 
+function incomingBodyCandidates() {
+  const seenEvents = new Set();
+  const candidates = Array.from(document.querySelectorAll(".mx_EventTile_body, .mx_MTextBody")).reverse();
+  return candidates.filter((body) => {
+    if (body.classList.contains("mx_EventTile_body") && body.querySelector(".mx_MTextBody")) return false;
+    if (!String(body.textContent || "").trim().startsWith(MESSAGE_PREFIX)) return false;
+    const event = body.closest(".mx_EventTile") || body;
+    if (seenEvents.has(event)) return false;
+    seenEvents.add(event);
+    return true;
+  });
+}
+
 async function runIncomingScan() {
   do {
     scanAgain = false;
-    const staged = Array.from(document.querySelectorAll(".mx_EventTile_body, .mx_MTextBody"))
-      .reverse()
+    const staged = incomingBodyCandidates()
       .map(stageIncomingBody)
       .filter(Boolean);
     for (let offset = 0; offset < staged.length; offset += 2) {
@@ -1232,7 +1244,7 @@ document.addEventListener("change", (event) => {
 window.callchatZMathRequired = true;
 window.callchatZMathCallRequired = true;
 window.callchatZMathAuto = Object.freeze({
-  version: "2026.07.11-renderer1",
+  version: "2026.07.11-renderer2",
   profile: PROFILE,
   isUnlocked,
   isMatrixOnly,
