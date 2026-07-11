@@ -30,6 +30,11 @@ jobs:
       - name: CallChat Community client contract
         run: node client/community/callchat-client.test.mjs
 
+      - name: Local CAPTCHA registration boundary
+        run: |
+          python3 -m py_compile registration/local-captcha/register_service.py
+          python3 -m unittest discover -s registration/local-captcha -p 'test_*.py' -v
+
       - name: Zero Bot one-reply contract
         run: |
           python3 -m pip install 'requests>=2.32.0,<3'

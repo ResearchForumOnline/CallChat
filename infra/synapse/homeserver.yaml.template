@@ -27,12 +27,13 @@ database:
 media_store_path: /data/media_store
 uploads_path: /data/uploads
 
-enable_registration: true
+enable_registration: false
 enable_registration_without_verification: false
-enable_registration_captcha: true
-recaptcha_public_key: "CHANGE_ME_PUBLIC_SITE_KEY"
-recaptcha_private_key: "CHANGE_ME_PRIVATE_SECRET"
-recaptcha_siteverify_api: "https://www.recaptcha.net/recaptcha/api/siteverify"
+enable_registration_captcha: false
+
+# For the optional local CAPTCHA service, keep the real shared secret in a
+# root-managed file outside the repository and outside the web root.
+# registration_shared_secret_path: "/data/registration.secret"
 
 rc_registration:
   per_second: 0.02
@@ -51,7 +52,6 @@ turn_allow_guests: false
 
 # Never commit real values for these fields:
 # registration_shared_secret:
-# recaptcha_private_key:
 # macaroon_secret_key:
 # form_secret:
 # signing_key_path:
