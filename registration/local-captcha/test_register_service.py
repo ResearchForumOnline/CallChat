@@ -1,9 +1,15 @@
 import hashlib
 import hmac
+import json
+import re
+import threading
 import unittest
+import urllib.error
+import urllib.request
+from http.server import ThreadingHTTPServer
 from unittest.mock import patch
 
-from register_service import PublicError, RegistrationState, registration_mac, validate_account
+from register_service import PublicError, RegistrationHandler, RegistrationState, registration_mac, validate_account
 
 
 class Clock:
@@ -65,6 +71,65 @@ class RegistrationServiceTests(unittest.TestCase):
         digest = hmac.new(b"secret", digestmod=hashlib.sha1)
         digest.update(b"nonce\x00alice\x00password1234\x00notadmin")
         self.assertEqual(actual, digest.hexdigest())
+
+
+class FakeRegistrar:
+    def __init__(self):
+        self.calls = []
+
+    def register(self, username, password):
+        self.calls.append((username, password))
+        return f"@{username}:callchat.org"
+
+
+class RegistrationHttpTests(unittest.TestCase):
+    def setUp(self):
+        self.registrar = FakeRegistrar()
+        handler = type("TestRegistrationHandler", (RegistrationHandler,), {
+            "state": RegistrationState(),
+            "registrar": self.registrar,
+            "allowed_origin": "https://callchat.org",
+        })
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.base = f"http://127.0.0.1:{self.server.server_port}"
+        self.headers = {"Origin": "https://callchat.org", "X-CallChat-Same-Origin": "1"}
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+
+    def test_http_challenge_and_registration(self):
+        request = urllib.request.Request(self.base + "/v1/challenge", headers=self.headers)
+        with urllib.request.urlopen(request, timeout=2) as response:
+            challenge = json.load(response)
+            self.assertEqual(response.headers["Cache-Control"], "no-store")
+        answer = sum(int(value) for value in re.findall(r"\d+", challenge["prompt"]))
+        payload = json.dumps({
+            "username": "Alice",
+            "password": "correct horse battery",
+            "challenge_id": challenge["challenge_id"],
+            "captcha_answer": str(answer),
+        }).encode()
+        request = urllib.request.Request(
+            self.base + "/v1/register", data=payload, method="POST",
+            headers={**self.headers, "Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(request, timeout=2) as response:
+            result = json.load(response)
+        self.assertEqual(result["user_id"], "@alice:callchat.org")
+        self.assertEqual(self.registrar.calls, [("alice", "correct horse battery")])
+
+    def test_cross_site_origin_is_rejected(self):
+        request = urllib.request.Request(
+            self.base + "/v1/challenge",
+            headers={"Origin": "https://cross-site.invalid", "X-CallChat-Same-Origin": "1"},
+        )
+        with self.assertRaises(urllib.error.HTTPError) as raised:
+            urllib.request.urlopen(request, timeout=2)
+        self.assertEqual(raised.exception.code, 403)
 
 
 if __name__ == "__main__":
