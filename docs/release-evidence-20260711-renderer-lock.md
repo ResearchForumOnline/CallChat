@@ -10,6 +10,7 @@ insert plaintext displays for one Matrix event.
 The corrected renderer:
 
 - marks each DOM body in a `WeakSet` before asynchronous work;
+- selects one protected body per Matrix event tile, excluding nested wrappers;
 - stages one placeholder and hides the envelope immediately;
 - decrypts newest messages first, two at a time;
 - updates the existing display instead of inserting another;
@@ -36,6 +37,6 @@ bundle with backup and rollback rather than installed automatically.
 
 - ZMath Auto interception and renderer contract passed.
 - ZShield and QPU-factor cryptographic tests passed.
-- Live assets identify release `2026.07.11.9` and renderer `20260711-renderer1`.
+- Live assets identify release `2026.07.11.10` and renderer `20260711-renderer2`.
 - The version-lock check passed for Synapse `1.155.0`, Element Web `v1.12.23`,
   the CallChat release metadata, and eight pinned application files.
