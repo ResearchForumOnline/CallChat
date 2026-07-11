@@ -10,11 +10,18 @@ import {
 
 const VAULT_KEY = "callchat.zmath.auto.v1";
 const MODE_KEY = "callchat.zmath.mode.v1";
+const TRUSTED_PROFILE_KEY = "callchat.zmath.trusted-profile.v1";
+const DEVICE_DB_NAME = "callchat-zmath-device-v1";
+const DEVICE_DB_STORE = "keys";
+const DEVICE_KEY_ID = "trusted-profile-key";
+const DEVICE_PROFILE_DOMAIN = "CallChat-ZMath-Trusted-Device-1";
 const VAULT_ITERATIONS = 600000;
 const MAX_AUTO_FILE_BYTES = 50 * 1024 * 1024;
 const MEDIA_ROOT_DOMAIN = "CallChat-ZMath-Media-Root-v1";
 const MEDIA_ROOM_DOMAIN = "CallChat-ZMath-Media-Room-v1";
 const encoder = new TextEncoder();
+const MODULE_OWNER = !window.__callchatZMathAutoModuleV2;
+if (MODULE_OWNER) window.__callchatZMathAutoModuleV2 = true;
 
 let sessionPassphrase = "";
 let sessionPattern = null;
@@ -26,6 +33,8 @@ let bypassSend = false;
 let bypassFile = false;
 let busy = false;
 let scanQueued = false;
+let setupBusy = false;
+let automaticRestore = null;
 const openedBodies = new Map();
 const preparedCallSecrets = new Map();
 
@@ -41,6 +50,130 @@ function bytesToBase64(bytes) {
 function base64ToBytes(value) {
   const binary = atob(String(value || ""));
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function openDeviceDatabase() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error("Trusted-device storage is unavailable in this browser."));
+      return;
+    }
+    const request = indexedDB.open(DEVICE_DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(DEVICE_DB_STORE)) {
+        request.result.createObjectStore(DEVICE_DB_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("Trusted-device storage could not be opened."));
+  });
+}
+
+async function deviceKey(create = false) {
+  const database = await openDeviceDatabase();
+  try {
+    const existing = await new Promise((resolve, reject) => {
+      const transaction = database.transaction(DEVICE_DB_STORE, "readonly");
+      const request = transaction.objectStore(DEVICE_DB_STORE).get(DEVICE_KEY_ID);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error("Trusted-device key could not be read."));
+    });
+    if (existing || !create) return existing;
+    const generated = await crypto.subtle.generateKey(
+      {name: "AES-GCM", length: 256},
+      false,
+      ["encrypt", "decrypt"]
+    );
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction(DEVICE_DB_STORE, "readwrite");
+      transaction.objectStore(DEVICE_DB_STORE).put(generated, DEVICE_KEY_ID);
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error || new Error("Trusted-device key could not be saved."));
+      transaction.onabort = () => reject(transaction.error || new Error("Trusted-device key storage was cancelled."));
+    });
+    return generated;
+  } finally {
+    database.close();
+  }
+}
+
+async function deleteDeviceKey() {
+  const database = await openDeviceDatabase();
+  try {
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction(DEVICE_DB_STORE, "readwrite");
+      transaction.objectStore(DEVICE_DB_STORE).delete(DEVICE_KEY_ID);
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error || new Error("Trusted-device key could not be removed."));
+      transaction.onabort = () => reject(transaction.error || new Error("Trusted-device key removal was cancelled."));
+    });
+  } finally {
+    database.close();
+  }
+}
+
+function hasTrustedDeviceProfile() {
+  return Boolean(localStorage.getItem(TRUSTED_PROFILE_KEY));
+}
+
+async function saveTrustedDeviceProfile(passphrase, patternBytes, name) {
+  const key = await deviceKey(true);
+  const iv = randomBytes(12);
+  const plaintext = encoder.encode(JSON.stringify({
+    version: 1,
+    passphrase,
+    pattern: bytesToBase64(patternBytes),
+    name: String(name || "callchat-pattern.png").slice(0, 128)
+  }));
+  try {
+    const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+      {name: "AES-GCM", iv, additionalData: encoder.encode(DEVICE_PROFILE_DOMAIN)},
+      key,
+      plaintext
+    ));
+    localStorage.setItem(TRUSTED_PROFILE_KEY, JSON.stringify({
+      version: 1,
+      iv: bytesToBase64(iv),
+      ciphertext: bytesToBase64(ciphertext)
+    }));
+  } finally {
+    plaintext.fill(0);
+  }
+}
+
+async function loadTrustedDeviceProfile() {
+  const record = JSON.parse(localStorage.getItem(TRUSTED_PROFILE_KEY) || "null");
+  if (!record || record.version !== 1 || base64ToBytes(record.iv).length !== 12) return null;
+  const key = await deviceKey(false);
+  if (!key) return null;
+  const plaintext = new Uint8Array(await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: base64ToBytes(record.iv),
+      additionalData: encoder.encode(DEVICE_PROFILE_DOMAIN)
+    },
+    key,
+    base64ToBytes(record.ciphertext)
+  ));
+  try {
+    const profile = JSON.parse(new TextDecoder().decode(plaintext));
+    const pattern = base64ToBytes(profile.pattern);
+    if (profile.version !== 1 || String(profile.passphrase || "").length < 14 || !pattern.length) {
+      throw new Error("The trusted-device profile is incomplete.");
+    }
+    return {passphrase: String(profile.passphrase), pattern, name: String(profile.name || "callchat-pattern.png")};
+  } finally {
+    plaintext.fill(0);
+  }
+}
+
+async function clearTrustedDeviceProfile() {
+  localStorage.removeItem(TRUSTED_PROFILE_KEY);
+  try {
+    await deleteDeviceKey();
+  } catch {
+    // The encrypted profile is already removed; a missing device key is harmless.
+  }
 }
 
 function bytesToBase64Url(bytes) {
@@ -198,6 +331,7 @@ function assertCallProtectionReady() {
 }
 
 async function prepareCallSecret(roomId) {
+  if (!isUnlocked() && !isMatrixOnly()) await restoreAutomaticSetup();
   assertCallProtectionReady();
   if (typeof roomId !== "string" || !roomId) throw new Error("The call room ID is unavailable.");
   const domain = encoder.encode(MEDIA_ROOM_DOMAIN);
@@ -236,7 +370,7 @@ function downloadBytes(bytes, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
-async function generatePatternImage() {
+async function generatePatternImage({download = true} = {}) {
   const seed = randomBytes(64);
   const canvas = document.createElement("canvas");
   canvas.width = 256;
@@ -259,9 +393,9 @@ async function generatePatternImage() {
   if (!blob) throw new Error("Pattern image generation failed.");
   pendingPattern = new Uint8Array(await blob.arrayBuffer());
   pendingPatternName = `callchat-zmath-pattern-${Date.now()}.png`;
-  downloadBytes(pendingPattern, pendingPatternName, "image/png");
+  if (download) downloadBytes(pendingPattern, pendingPatternName, "image/png");
   updatePatternMeta();
-  toast("Pattern image generated and downloaded. Keep it with your recovery material.");
+  if (download) toast("Recovery pattern downloaded. Keep it separately from the passphrase.");
   return {bytes: pendingPattern, name: pendingPatternName};
 }
 
@@ -279,16 +413,72 @@ function generatePassphrase() {
   return groups.join("-");
 }
 
+async function activateProfile(passphrase, pattern, name, {remember = false, trusted = false} = {}) {
+  if (String(passphrase || "").length < 14) throw new Error("Use a passphrase with at least 14 characters.");
+  if (!(pattern instanceof Uint8Array) || !pattern.length) throw new Error("The exact pattern image is required.");
+  const mediaRoot = await deriveMediaRoot(passphrase, pattern);
+  if (sessionPattern) sessionPattern.fill(0);
+  if (sessionMediaRoot) sessionMediaRoot.fill(0);
+  for (const secret of preparedCallSecrets.values()) secret.fill(0);
+  preparedCallSecrets.clear();
+  sessionPassphrase = passphrase;
+  sessionPattern = pattern.slice();
+  sessionPatternName = String(name || "callchat-pattern.png");
+  sessionMediaRoot = mediaRoot;
+  pendingPattern = null;
+  pendingPatternName = "";
+  if (remember) await rememberPattern(passphrase, sessionPattern, sessionPatternName);
+  if (trusted) await saveTrustedDeviceProfile(passphrase, sessionPattern, sessionPatternName);
+  const input = document.getElementById("zmath-auto-passphrase");
+  if (input) input.value = "";
+  setMatrixOnly(false);
+  updateUi();
+  queueIncomingScan();
+}
+
 async function createAutomaticSetup() {
-  const passphrase = generatePassphrase();
-  document.getElementById("zmath-auto-passphrase").value = passphrase;
-  await generatePatternImage();
-  const recovery = document.getElementById("zmath-auto-recovery");
-  const recoveryCode = document.getElementById("zmath-auto-recovery-code");
-  recovery.hidden = false;
-  recoveryCode.textContent = passphrase;
-  await unlock();
-  toast("ZMath Auto is active. Save the one-time passphrase separately from the downloaded pattern image.");
+  if (setupBusy) return;
+  setupBusy = true;
+  updateUi();
+  try {
+    const passphrase = generatePassphrase();
+    const generated = await generatePatternImage({download: true});
+    await activateProfile(passphrase, generated.bytes, generated.name, {remember: true, trusted: true});
+    const recovery = document.getElementById("zmath-auto-recovery");
+    const recoveryCode = document.getElementById("zmath-auto-recovery-code");
+    recovery.hidden = false;
+    recoveryCode.textContent = passphrase;
+    toast("Automatic protection is active. Save the recovery passphrase separately from the downloaded pattern.");
+  } finally {
+    setupBusy = false;
+    updateUi();
+  }
+}
+
+async function restoreAutomaticSetup({notify = false} = {}) {
+  if (isUnlocked()) return true;
+  if (isMatrixOnly() || !hasTrustedDeviceProfile()) return false;
+  if (!automaticRestore) {
+    automaticRestore = (async () => {
+      const profile = await loadTrustedDeviceProfile();
+      if (!profile) {
+        localStorage.removeItem(TRUSTED_PROFILE_KEY);
+        updateUi();
+        if (notify) toast("The previous automatic profile is unavailable. Create a new profile or import recovery factors.");
+        return false;
+      }
+      await activateProfile(profile.passphrase, profile.pattern, profile.name);
+      profile.pattern.fill(0);
+      return true;
+    })();
+  }
+  try {
+    const restored = await automaticRestore;
+    if (restored && notify) toast("Automatic protection restored for this trusted device.");
+    return restored;
+  } finally {
+    automaticRestore = null;
+  }
 }
 
 function createUi() {
@@ -310,43 +500,55 @@ function createUi() {
     </div>
     <div class="zmath-auto-body">
       <p class="zmath-auto-state" id="zmath-auto-state"></p>
-      <button class="zmath-auto-primary zmath-auto-setup" id="zmath-auto-setup" type="button">Create secure setup automatically</button>
+      <div class="zmath-auto-simple">
+        <button class="zmath-auto-primary zmath-auto-setup" id="zmath-auto-setup" type="button">Turn on automatic protection</button>
+        <p id="zmath-auto-device-state">One action creates a protected profile and restores it automatically in this trusted browser.</p>
+      </div>
       <div class="zmath-auto-recovery" id="zmath-auto-recovery" hidden>
         <strong>Save this passphrase now</strong>
         <code id="zmath-auto-recovery-code"></code>
         <button id="zmath-auto-copy-recovery" type="button">Copy passphrase</button>
-        <small>It is shown once and is not stored. Keep it separately from the downloaded pattern image.</small>
+        <small>It is shown once here. Keep it separately from the downloaded pattern image for recovery and approved device sharing.</small>
       </div>
-      <label class="zmath-auto-field">
-        <span>Passphrase</span>
-        <input id="zmath-auto-passphrase" type="password" minlength="14" autocomplete="current-password">
-      </label>
-      <div class="zmath-auto-actions">
-        <button id="zmath-auto-generate-pass" type="button">Generate passphrase</button>
-        <button id="zmath-auto-generate-pattern" type="button">Generate pattern image</button>
-      </div>
-      <label class="zmath-auto-field">
-        <span>Exact pattern image</span>
-        <input id="zmath-auto-pattern" type="file" accept="image/*">
-      </label>
-      <p class="zmath-auto-meta" id="zmath-auto-pattern-meta">No pattern loaded.</p>
-      <div class="zmath-auto-row">
-        <label><input id="zmath-auto-remember" type="checkbox" checked> Remember image encrypted on this device</label>
-      </div>
-      <div class="zmath-auto-row">
-        <label><input id="zmath-auto-matrix-only" type="checkbox"> Matrix-only sending</label>
-      </div>
-      <div class="zmath-auto-actions">
-        <button class="zmath-auto-primary" id="zmath-auto-unlock" type="button">Unlock ZMath</button>
-        <button id="zmath-auto-lock" type="button">Lock</button>
-        <button class="zmath-auto-danger" id="zmath-auto-forget" type="button">Forget device image</button>
-      </div>
-      <div class="zmath-auto-diagnostic">
-        <button id="zmath-auto-self-test" type="button">Run encryption self-test</button>
-        <p id="zmath-auto-self-test-result">Not run in this session.</p>
-      </div>
-      <p class="zmath-auto-meta">Content profile: <span id="zmath-auto-profile"></span></p>
-      <p class="zmath-auto-meta">Call profile: ZMATH-MATRIXRTC-LIVEKIT-1</p>
+      <details class="zmath-auto-advanced" id="zmath-auto-advanced">
+        <summary>Advanced options</summary>
+        <div class="zmath-auto-advanced-body">
+          <p class="zmath-auto-meta">Import the same shared passphrase and exact pattern on approved devices that must open protected room content.</p>
+          <label class="zmath-auto-field">
+            <span>Shared passphrase</span>
+            <input id="zmath-auto-passphrase" type="password" minlength="14" autocomplete="current-password">
+          </label>
+          <div class="zmath-auto-actions">
+            <button id="zmath-auto-generate-pass" type="button">Generate passphrase</button>
+            <button id="zmath-auto-generate-pattern" type="button">Generate pattern image</button>
+          </div>
+          <label class="zmath-auto-field">
+            <span>Exact pattern image</span>
+            <input id="zmath-auto-pattern" type="file" accept="image/*">
+          </label>
+          <p class="zmath-auto-meta" id="zmath-auto-pattern-meta">No pattern loaded.</p>
+          <div class="zmath-auto-row">
+            <label><input id="zmath-auto-trusted" type="checkbox" checked> Auto-unlock on this trusted device</label>
+          </div>
+          <div class="zmath-auto-row">
+            <label><input id="zmath-auto-remember" type="checkbox" checked> Keep an encrypted pattern fallback</label>
+          </div>
+          <div class="zmath-auto-row">
+            <label><input id="zmath-auto-matrix-only" type="checkbox"> Matrix-only sending</label>
+          </div>
+          <div class="zmath-auto-actions">
+            <button class="zmath-auto-primary" id="zmath-auto-unlock" type="button">Use shared profile</button>
+            <button id="zmath-auto-lock" type="button">Pause this session</button>
+            <button class="zmath-auto-danger" id="zmath-auto-forget" type="button">Reset this device</button>
+          </div>
+          <div class="zmath-auto-diagnostic">
+            <button id="zmath-auto-self-test" type="button">Run encryption self-test</button>
+            <p id="zmath-auto-self-test-result">Not run in this session.</p>
+          </div>
+          <p class="zmath-auto-meta">Content profile: <span id="zmath-auto-profile"></span></p>
+          <p class="zmath-auto-meta">Call profile: ZMATH-MATRIXRTC-LIVEKIT-1</p>
+        </div>
+      </details>
     </div>`;
   const toastElement = document.createElement("div");
   toastElement.id = "zmath-auto-toast";
@@ -356,13 +558,15 @@ function createUi() {
 
   launcher.addEventListener("click", () => {
     panel.hidden = !panel.hidden;
-    if (!panel.hidden) document.getElementById("zmath-auto-passphrase").focus();
   });
   panel.querySelector(".zmath-auto-close").addEventListener("click", () => {
     panel.hidden = true;
   });
   document.getElementById("zmath-auto-setup").addEventListener("click", () => {
-    createAutomaticSetup().catch(showError);
+    const action = hasTrustedDeviceProfile()
+      ? restoreAutomaticSetup({notify: true})
+      : createAutomaticSetup();
+    action.catch(showError);
   });
   document.getElementById("zmath-auto-copy-recovery").addEventListener("click", async () => {
     const value = document.getElementById("zmath-auto-recovery-code").textContent || "";
@@ -389,13 +593,14 @@ function createUi() {
     unlock().catch(showError);
   });
   document.getElementById("zmath-auto-lock").addEventListener("click", lock);
-  document.getElementById("zmath-auto-forget").addEventListener("click", () => {
+  document.getElementById("zmath-auto-forget").addEventListener("click", async () => {
     localStorage.removeItem(VAULT_KEY);
+    await clearTrustedDeviceProfile();
     pendingPattern = null;
     pendingPatternName = "";
     lock();
     updatePatternMeta();
-    toast("Encrypted device image removed.");
+    toast("ZMath was reset on this device. Matrix E2EE remains available.");
   });
   document.getElementById("zmath-auto-self-test").addEventListener("click", () => {
     runSelfTest().catch(showError);
@@ -405,6 +610,11 @@ function createUi() {
   });
   document.getElementById("zmath-auto-profile").textContent = PROFILE;
   updateUi();
+  restoreAutomaticSetup({notify: true}).catch((error) => {
+    const advanced = document.getElementById("zmath-auto-advanced");
+    if (advanced) advanced.open = true;
+    showError(error);
+  });
 }
 
 async function updatePatternMeta() {
@@ -424,24 +634,46 @@ async function updatePatternMeta() {
 function updateUi() {
   const launcher = document.getElementById("zmath-auto-launcher");
   const state = document.getElementById("zmath-auto-state");
+  const setup = document.getElementById("zmath-auto-setup");
+  const deviceState = document.getElementById("zmath-auto-device-state");
   const matrixOnly = isMatrixOnly();
   if (!launcher || !state) return;
   document.getElementById("zmath-auto-matrix-only").checked = matrixOnly;
+  if (setup) {
+    setup.disabled = setupBusy;
+    setup.hidden = matrixOnly || (isUnlocked() && !setupBusy);
+    setup.textContent = setupBusy
+      ? "Creating protected profile..."
+      : hasTrustedDeviceProfile()
+        ? "Restore automatic protection"
+        : "Turn on automatic protection";
+  }
   if (matrixOnly) {
     launcher.textContent = "Matrix only";
     launcher.dataset.state = "matrix";
-    state.textContent = "ZMath interception is off. Matrix E2EE continues normally.";
+    state.textContent = "ZMath protection is paused. Matrix end-to-end encryption continues normally.";
     state.dataset.state = "matrix";
+    if (deviceState) deviceState.textContent = "Turn off Matrix-only mode in Advanced options to restore automatic protection.";
   } else if (isUnlocked()) {
-    launcher.textContent = "ZMath auto";
+    launcher.textContent = "ZMath protected";
     launcher.dataset.state = "ready";
-    state.textContent = "Unlocked. Messages, attachments, voice and video use the shared passphrase and exact pattern. Call media keys also rotate through MatrixRTC.";
+    state.textContent = "Automatic protection is active for messages, selected attachments, voice and video in this browser session.";
     state.dataset.state = "ready";
+    if (deviceState) {
+      deviceState.textContent = hasTrustedDeviceProfile()
+        ? "This trusted browser will restore the encrypted profile automatically."
+        : "This shared profile is active for the current browser session.";
+    }
   } else {
     launcher.textContent = "ZMath locked";
     launcher.dataset.state = "locked";
-    state.textContent = "Unlock before sending or calling. Incoming ZMath content and protected call media work only while this browser session is unlocked.";
+    state.textContent = "Protection is paused. Turn it on automatically, or import a shared profile under Advanced options.";
     state.dataset.state = "locked";
+    if (deviceState) {
+      deviceState.textContent = hasTrustedDeviceProfile()
+        ? "A trusted-device profile is ready to restore automatically."
+        : "One action creates a protected profile and restores it automatically in this trusted browser.";
+    }
   }
   updatePatternMeta();
 }
@@ -459,25 +691,16 @@ async function unlock() {
     }
   }
   if (!pattern || !pattern.length) throw new Error("Import or generate the exact pattern image first.");
-  const mediaRoot = await deriveMediaRoot(passphrase, pattern);
-  if (sessionPattern) sessionPattern.fill(0);
-  if (sessionMediaRoot) sessionMediaRoot.fill(0);
-  for (const secret of preparedCallSecrets.values()) secret.fill(0);
-  preparedCallSecrets.clear();
-  sessionPassphrase = passphrase;
-  sessionPattern = pattern.slice();
-  sessionPatternName = name;
-  sessionMediaRoot = mediaRoot;
-  pendingPattern = null;
-  pendingPatternName = "";
-  if (document.getElementById("zmath-auto-remember").checked) {
-    await rememberPattern(passphrase, sessionPattern, sessionPatternName);
-  }
-  document.getElementById("zmath-auto-passphrase").value = "";
-  setMatrixOnly(false);
+  const trusted = document.getElementById("zmath-auto-trusted").checked;
+  await activateProfile(passphrase, pattern, name, {
+    remember: document.getElementById("zmath-auto-remember").checked,
+    trusted,
+  });
+  if (!trusted && hasTrustedDeviceProfile()) await clearTrustedDeviceProfile();
   updateUi();
-  queueIncomingScan();
-  toast("ZMath Auto unlocked for messages, files, voice and video in this browser session.");
+  toast(trusted
+    ? "Shared profile active and automatic unlock enabled for this trusted device."
+    : "Shared profile active for this browser session.");
 }
 
 function lock() {
@@ -587,9 +810,10 @@ async function protectComposerAndSend(composer) {
   const editor = editorFor(composer);
   const message = editor && editorText(editor).trim();
   if (!message || message.startsWith(MESSAGE_PREFIX)) return;
+  if (!isUnlocked() && !isMatrixOnly()) await restoreAutomaticSetup();
   if (!isUnlocked()) {
     document.getElementById("zmath-auto-panel").hidden = false;
-    toast("Unlock ZMath before sending, or explicitly choose Matrix-only sending.");
+    toast("Turn on automatic protection, or use Advanced options to import a shared profile.");
     return;
   }
   busy = true;
@@ -627,10 +851,11 @@ async function protectSelectedFiles(input) {
   if (busy || bypassFile) return;
   const files = Array.from(input.files || []);
   if (!files.length) return;
+  if (!isUnlocked() && !isMatrixOnly()) await restoreAutomaticSetup();
   if (!isUnlocked()) {
     input.value = "";
     document.getElementById("zmath-auto-panel").hidden = false;
-    toast("Unlock ZMath before attaching files.");
+    toast("Turn on automatic protection before attaching files.");
     return;
   }
   busy = true;
@@ -654,6 +879,7 @@ async function prepareFiles(files) {
   const selected = Array.from(files || []);
   if (!selected.length) return [];
   if (isMatrixOnly()) return selected;
+  if (!isUnlocked()) await restoreAutomaticSetup();
   if (!isUnlocked()) {
     const panel = document.getElementById("zmath-auto-panel");
     if (panel) panel.hidden = false;
@@ -722,6 +948,7 @@ function queueIncomingScan() {
 }
 
 async function openShieldAttachment(anchor) {
+  if (!isUnlocked() && !isMatrixOnly()) await restoreAutomaticSetup();
   if (!isUnlocked()) {
     document.getElementById("zmath-auto-panel").hidden = false;
     toast("Unlock ZMath to open this attachment.");
@@ -747,6 +974,7 @@ async function openShieldAttachment(anchor) {
   toast("ZMath attachment authenticated and opened locally.");
 }
 
+if (MODULE_OWNER) {
 document.addEventListener("keydown", (event) => {
   if (
     bypassSend ||
@@ -808,6 +1036,7 @@ document.addEventListener("change", (event) => {
 window.callchatZMathRequired = true;
 window.callchatZMathCallRequired = true;
 window.callchatZMathAuto = Object.freeze({
+  version: "2026.07.11-auto7",
   profile: PROFILE,
   isUnlocked,
   isMatrixOnly,
@@ -825,4 +1054,5 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", createUi, {once: true});
 } else {
   createUi();
+}
 }

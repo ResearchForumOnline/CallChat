@@ -6,7 +6,7 @@ sent to a ZMath server.
 
 ## What it does
 
-After a local unlock, the controller intercepts Element's message composer while
+After automatic trusted-device restore or a shared-profile unlock, the controller intercepts Element's message composer while
 the maintained CallChat client routes every room upload through the ZMath bridge.
 That native upload point covers the file picker, drag and drop, paste, and
 composer file insertion. Text becomes a `ZSHIELD1:` envelope and files become
@@ -26,16 +26,21 @@ The current public profile is `ZMATH-PBKDF2-HKDF-AESGCM-2`:
 - AES-256-GCM encrypts and authenticates the payload and header context.
 - The legacy `ZSHIELD-PBKDF2-AESGCM-1` profile remains readable.
 
-The pattern image can be remembered only as an AES-GCM-encrypted local browser
-record. The passphrase remains in memory for the unlocked session and is not
-stored. Recipients need the same passphrase and exact image to open the extra
-application layer.
+For the default automatic mode, the browser generates a non-exportable AES-GCM
+device key in IndexedDB and uses it to encrypt the local ZMath profile. The
+encrypted profile record is stored on the same origin and automatically
+restored on later visits from that trusted browser. Manual session-only import,
+the older passphrase-encrypted pattern fallback, Matrix-only sending, reset,
+and the encryption diagnostic remain under **Advanced options**. Recipients
+and approved devices still need the same passphrase and exact image to open the
+extra application layer.
 
-`Create secure setup automatically` generates a random grouped passphrase and a
-unique PNG pattern locally, downloads the pattern, remembers only its encrypted
-device record, and unlocks the current session. The passphrase is shown once and
-must be stored separately. `Run encryption self-test` performs an authenticated
-random-payload round trip with the current factors without uploading plaintext.
+`Turn on automatic protection` generates a random grouped passphrase and a
+unique PNG pattern locally, downloads the recovery pattern, encrypts the
+trusted-device profile, and unlocks the session in one action. The passphrase
+is shown once in the setup panel and must be stored separately from the pattern.
+`Run encryption self-test` performs an authenticated random-payload round trip
+with the current factors without uploading plaintext.
 
 ## How to verify an uploaded file
 
@@ -59,6 +64,11 @@ device verification remain important. The hosted protected-call profile uses a
 required in-memory ZMath factor with rotating MatrixRTC media keys before
 LiveKit frame encryption. IonQ assurance jobs are provider-isolated receipts
 around that control record and remain outside the encryption key path.
+
+Trusted-device auto-unlock protects stored factors at rest but follows the
+security boundary of the signed-in browser profile. Resetting site data removes
+the automatic profile; recovery factors remain necessary for another browser
+or device.
 
 The integration source is in [`element/zmath-auto`](../element/zmath-auto/).
 The native upload choke point is published in CallChat Community commit
