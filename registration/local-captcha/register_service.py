@@ -107,8 +107,7 @@ def validate_account(username: object, password: object) -> tuple[str, str]:
 def registration_mac(secret: str, nonce: str, username: str, password: str) -> str:
     # Synapse's shared-secret registration protocol mandates HMAC-SHA1 here;
     # this authenticates one loopback request and is not a password hash.
-    # codeql[py/weak-sensitive-data-hashing]
-    digest = hmac.new(secret.encode("utf-8"), digestmod=hashlib.sha1)
+    digest = hmac.new(secret.encode("utf-8"), digestmod=hashlib.sha1)  # lgtm[py/weak-sensitive-data-hashing]
     for value in (nonce, username, password):
         digest.update(value.encode("utf-8"))
         digest.update(b"\x00")
