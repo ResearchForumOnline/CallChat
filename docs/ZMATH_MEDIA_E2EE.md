@@ -29,6 +29,11 @@ are zeroed when ZMath is locked, Matrix-only mode is selected, or a new session
 is unlocked. Hosted calls fail closed if the required bridge is missing or
 locked.
 
+The hosted distribution enables Matrix group calls and sets Element Call to
+exclusive mode, including for two-person rooms. This prevents a fallback to
+the legacy one-to-one WebRTC call path, which does not implement this custom
+profile.
+
 ## Compatibility and limits
 
 This profile currently works only between matching CallChat web clients.
