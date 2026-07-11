@@ -7,6 +7,7 @@ import {
   protectMessage,
   protectPayload
 } from "/shield/app/zshield-core.js";
+import {parseQuantumFactorFile} from "/shield/app/qpu-factor-core.js?v=20260711-qfactor1";
 
 const VAULT_KEY = "callchat.zmath.auto.v1";
 const MODE_KEY = "callchat.zmath.mode.v1";
@@ -27,8 +28,12 @@ let sessionPassphrase = "";
 let sessionPattern = null;
 let sessionPatternName = "";
 let sessionMediaRoot = null;
+let sessionQuantumFactor = null;
+let sessionQuantumEvidence = null;
+let sessionQuantumFactorFile = null;
 let pendingPattern = null;
 let pendingPatternName = "";
+let pendingQuantumFactorFile = null;
 let bypassSend = false;
 let bypassFile = false;
 let busy = false;
@@ -118,14 +123,15 @@ function hasTrustedDeviceProfile() {
   return trustedProfileAvailable;
 }
 
-async function saveTrustedDeviceProfile(passphrase, patternBytes, name) {
+async function saveTrustedDeviceProfile(passphrase, patternBytes, name, quantumFactorFile) {
   const key = await deviceKey(true);
   const iv = randomBytes(12);
   const plaintext = encoder.encode(JSON.stringify({
-    version: 1,
+    version: 2,
     passphrase,
     pattern: bytesToBase64(patternBytes),
-    name: String(name || "callchat-pattern.png").slice(0, 128)
+    name: String(name || "callchat-pattern.png").slice(0, 128),
+    quantumFactorFile: quantumFactorFile || null
   }));
   try {
     const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
@@ -193,10 +199,15 @@ async function loadTrustedDeviceProfile() {
   try {
     const profile = JSON.parse(new TextDecoder().decode(plaintext));
     const pattern = base64ToBytes(profile.pattern);
-    if (profile.version !== 1 || String(profile.passphrase || "").length < 14 || !pattern.length) {
+    if (![1, 2].includes(profile.version) || String(profile.passphrase || "").length < 14 || !pattern.length) {
       throw new Error("The trusted-device profile is incomplete.");
     }
-    return {passphrase: String(profile.passphrase), pattern, name: String(profile.name || "callchat-pattern.png")};
+    return {
+      passphrase: String(profile.passphrase),
+      pattern,
+      name: String(profile.name || "callchat-pattern.png"),
+      quantumFactorFile: profile.version === 2 ? profile.quantumFactorFile || null : null
+    };
   } finally {
     plaintext.fill(0);
   }
@@ -299,7 +310,7 @@ async function patternFingerprint(bytes) {
   return Array.from(digest.subarray(0, 8), (value) => value.toString(16).padStart(2, "0")).join("");
 }
 
-async function deriveMediaRoot(passphrase, patternBytes) {
+async function deriveMediaRoot(passphrase, patternBytes, quantumFactorBytes = null) {
   const domain = encoder.encode(MEDIA_ROOT_DOMAIN);
   const patternHash = new Uint8Array(await crypto.subtle.digest("SHA-256", patternBytes));
   const saltInput = joinBytes(domain, new Uint8Array([0]), patternHash);
@@ -316,7 +327,12 @@ async function deriveMediaRoot(passphrase, patternBytes) {
     passphraseKey,
     256
   ));
-  const ikmBytes = joinBytes(passphraseFactor, new Uint8Array([0]), patternHash);
+  const quantumFactorHash = quantumFactorBytes && quantumFactorBytes.length
+    ? new Uint8Array(await crypto.subtle.digest("SHA-256", quantumFactorBytes))
+    : new Uint8Array();
+  const ikmBytes = quantumFactorHash.length
+    ? joinBytes(passphraseFactor, new Uint8Array([0]), patternHash, new Uint8Array([0]), quantumFactorHash)
+    : joinBytes(passphraseFactor, new Uint8Array([0]), patternHash);
   const ikm = await crypto.subtle.importKey("raw", ikmBytes, "HKDF", false, ["deriveBits"]);
   const root = new Uint8Array(await crypto.subtle.deriveBits(
     {name: "HKDF", hash: "SHA-256", salt, info: domain},
@@ -327,8 +343,19 @@ async function deriveMediaRoot(passphrase, patternBytes) {
   saltInput.fill(0);
   salt.fill(0);
   passphraseFactor.fill(0);
+  quantumFactorHash.fill(0);
   ikmBytes.fill(0);
   return root;
+}
+
+function quantumContext() {
+  if (!sessionQuantumEvidence || !sessionQuantumFactor) return {};
+  return {
+    quantumFactorBytes: sessionQuantumFactor,
+    qpuBackend: sessionQuantumEvidence.backend,
+    qpuJob: sessionQuantumEvidence.job_id,
+    qpuEvidenceDigest: sessionQuantumEvidence.evidenceDigest
+  };
 }
 
 function assertCallProtectionReady() {
@@ -429,21 +456,39 @@ function generatePassphrase() {
   return groups.join("-");
 }
 
-async function activateProfile(passphrase, pattern, name, {trusted = false} = {}) {
+async function activateProfile(passphrase, pattern, name, {trusted = false, quantumFactorFile = null} = {}) {
   if (String(passphrase || "").length < 14) throw new Error("Use a passphrase with at least 14 characters.");
   if (!(pattern instanceof Uint8Array) || !pattern.length) throw new Error("The exact pattern image is required.");
-  const mediaRoot = await deriveMediaRoot(passphrase, pattern);
+  const parsedFactor = quantumFactorFile
+    ? await parseQuantumFactorFile(quantumFactorFile, {requireHardware: true})
+    : null;
+  const mediaRoot = await deriveMediaRoot(passphrase, pattern, parsedFactor && parsedFactor.factorBytes);
   if (sessionPattern) sessionPattern.fill(0);
   if (sessionMediaRoot) sessionMediaRoot.fill(0);
+  if (sessionQuantumFactor) sessionQuantumFactor.fill(0);
   for (const secret of preparedCallSecrets.values()) secret.fill(0);
   preparedCallSecrets.clear();
   sessionPassphrase = passphrase;
   sessionPattern = pattern.slice();
   sessionPatternName = String(name || "callchat-pattern.png");
   sessionMediaRoot = mediaRoot;
+  sessionQuantumFactor = parsedFactor ? parsedFactor.factorBytes : null;
+  sessionQuantumEvidence = parsedFactor ? {
+    ...parsedFactor.evidence,
+    evidenceDigest: parsedFactor.evidenceDigest
+  } : null;
+  sessionQuantumFactorFile = quantumFactorFile || null;
   pendingPattern = null;
   pendingPatternName = "";
-  if (trusted) await saveTrustedDeviceProfile(passphrase, sessionPattern, sessionPatternName);
+  pendingQuantumFactorFile = null;
+  if (trusted) {
+    await saveTrustedDeviceProfile(
+      passphrase,
+      sessionPattern,
+      sessionPatternName,
+      sessionQuantumFactorFile
+    );
+  }
   const input = document.getElementById("zmath-auto-passphrase");
   if (input) input.value = "";
   setMatrixOnly(false);
@@ -480,7 +525,9 @@ async function restoreAutomaticSetup({notify = false} = {}) {
         updateUi();
         return false;
       }
-      await activateProfile(profile.passphrase, profile.pattern, profile.name);
+      await activateProfile(profile.passphrase, profile.pattern, profile.name, {
+        quantumFactorFile: profile.quantumFactorFile
+      });
       profile.pattern.fill(0);
       return true;
     })();
@@ -540,6 +587,14 @@ function createUi() {
             <input id="zmath-auto-pattern" type="file" accept="image/*">
           </label>
           <p class="zmath-auto-meta" id="zmath-auto-pattern-meta">No pattern loaded.</p>
+          <label class="zmath-auto-field">
+            <span>IonQ hardware factor (optional)</span>
+            <input id="zmath-auto-quantum-factor" type="file" accept="application/json,.zqf">
+          </label>
+          <p class="zmath-auto-meta" id="zmath-auto-quantum-meta">No QPU factor loaded. Standard ZMath protection remains active.</p>
+          <div class="zmath-auto-actions">
+            <button id="zmath-auto-clear-quantum" type="button">Remove QPU factor</button>
+          </div>
           <div class="zmath-auto-row">
             <label><input id="zmath-auto-trusted" type="checkbox" checked> Auto-unlock on this trusted device</label>
           </div>
@@ -556,7 +611,7 @@ function createUi() {
             <p id="zmath-auto-self-test-result">Not run in this session.</p>
           </div>
           <p class="zmath-auto-meta">Content profile: <span id="zmath-auto-profile"></span></p>
-          <p class="zmath-auto-meta">Call profile: ZMATH-MATRIXRTC-LIVEKIT-1</p>
+          <p class="zmath-auto-meta">Call profile: <span id="zmath-auto-call-profile">ZMATH-MATRIXRTC-LIVEKIT-1</span></p>
         </div>
       </details>
     </div>`;
@@ -599,6 +654,25 @@ function createUi() {
     pendingPatternName = file.name;
     updatePatternMeta();
   });
+  document.getElementById("zmath-auto-quantum-factor").addEventListener("change", (event) => {
+    (async () => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (file.size > 32768) throw new Error("The QPU factor file is unexpectedly large.");
+      const value = await file.text();
+      const parsed = await parseQuantumFactorFile(value, {requireHardware: true});
+      parsed.factorBytes.fill(0);
+      pendingQuantumFactorFile = value;
+      updateQuantumMeta(parsed.evidence, file.name);
+    })().catch(showError);
+  });
+  document.getElementById("zmath-auto-clear-quantum").addEventListener("click", () => {
+    pendingQuantumFactorFile = null;
+    const input = document.getElementById("zmath-auto-quantum-factor");
+    if (input) input.value = "";
+    updateQuantumMeta();
+    toast("The pending QPU factor was removed. Apply the shared profile to change the active session.");
+  });
   document.getElementById("zmath-auto-unlock").addEventListener("click", () => {
     unlock().catch(showError);
   });
@@ -608,6 +682,7 @@ function createUi() {
     await clearTrustedDeviceProfile();
     pendingPattern = null;
     pendingPatternName = "";
+    pendingQuantumFactorFile = null;
     lock();
     updatePatternMeta();
     toast("ZMath was reset on this device. Matrix E2EE remains available.");
@@ -641,6 +716,17 @@ async function updatePatternMeta() {
   element.textContent = `${name} · fingerprint ${await patternFingerprint(bytes)}`;
 }
 
+function updateQuantumMeta(evidence = sessionQuantumEvidence, name = "") {
+  const element = document.getElementById("zmath-auto-quantum-meta");
+  if (!element) return;
+  if (!evidence) {
+    element.textContent = "No QPU factor loaded. Standard ZMath protection remains active.";
+    return;
+  }
+  const job = String(evidence.job_id || "").slice(0, 8);
+  element.textContent = `${name ? `${name} · ` : ""}IonQ ${evidence.backend} hardware factor · job ${job}`;
+}
+
 function updateUi() {
   const launcher = document.getElementById("zmath-auto-launcher");
   const state = document.getElementById("zmath-auto-state");
@@ -649,6 +735,12 @@ function updateUi() {
   const matrixOnly = isMatrixOnly();
   if (!launcher || !state) return;
   document.getElementById("zmath-auto-matrix-only").checked = matrixOnly;
+  const callProfile = document.getElementById("zmath-auto-call-profile");
+  if (callProfile) {
+    callProfile.textContent = sessionQuantumFactor
+      ? "ZMATH-MATRIXRTC-LIVEKIT-QPUFACTOR-1"
+      : "ZMATH-MATRIXRTC-LIVEKIT-1";
+  }
   if (setup) {
     setup.disabled = setupBusy;
     setup.hidden = matrixOnly || (isUnlocked() && !setupBusy);
@@ -667,7 +759,9 @@ function updateUi() {
   } else if (isUnlocked()) {
     launcher.textContent = "ZMath protected";
     launcher.dataset.state = "ready";
-    state.textContent = "Automatic protection is active for messages, selected attachments, voice and video in this browser session.";
+    state.textContent = sessionQuantumFactor
+      ? "ZMath protection with an IonQ hardware-linked factor is active for messages, selected attachments, voice and video in this browser session."
+      : "Automatic protection is active for messages, selected attachments, voice and video in this browser session.";
     state.dataset.state = "ready";
     if (deviceState) {
       deviceState.textContent = hasTrustedDeviceProfile()
@@ -686,6 +780,7 @@ function updateUi() {
     }
   }
   updatePatternMeta();
+  updateQuantumMeta();
 }
 
 async function unlock() {
@@ -704,6 +799,7 @@ async function unlock() {
   const trusted = document.getElementById("zmath-auto-trusted").checked;
   await activateProfile(passphrase, pattern, name, {
     trusted,
+    quantumFactorFile: pendingQuantumFactorFile,
   });
   if (!trusted) await clearTrustedDeviceProfile();
   updateUi();
@@ -716,9 +812,13 @@ function lock() {
   sessionPassphrase = "";
   if (sessionPattern) sessionPattern.fill(0);
   if (sessionMediaRoot) sessionMediaRoot.fill(0);
+  if (sessionQuantumFactor) sessionQuantumFactor.fill(0);
   sessionPattern = null;
   sessionPatternName = "";
   sessionMediaRoot = null;
+  sessionQuantumFactor = null;
+  sessionQuantumEvidence = null;
+  sessionQuantumFactorFile = null;
   for (const secret of preparedCallSecrets.values()) secret.fill(0);
   preparedCallSecrets.clear();
   for (const [body, opened] of openedBodies) {
@@ -743,6 +843,7 @@ async function runSelfTest() {
     kind: "diagnostic",
     passphrase: sessionPassphrase,
     patternBytes: sessionPattern,
+    ...quantumContext(),
     context: {
       purpose: "local-self-test",
       zmathPolicy: "ZMath-Auto-Policy-2",
@@ -752,7 +853,8 @@ async function runSelfTest() {
   const opened = await openContainerPayload({
     container,
     passphrase: sessionPassphrase,
-    patternBytes: sessionPattern
+    patternBytes: sessionPattern,
+    quantumFactorBytes: sessionQuantumFactor
   });
   const matches = opened.bytes.length === plaintext.length && opened.bytes.every((byte, index) => byte === plaintext[index]);
   plaintext.fill(0);
@@ -831,7 +933,8 @@ async function protectComposerAndSend(composer) {
     const protectedMessage = await protectMessage({
       message,
       passphrase: sessionPassphrase,
-      patternBytes: sessionPattern
+      patternBytes: sessionPattern,
+      ...quantumContext()
     });
     writeEditor(editor, protectedMessage.envelope);
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -909,6 +1012,7 @@ async function prepareFiles(files) {
       kind: "matrix-attachment",
       passphrase: sessionPassphrase,
       patternBytes: sessionPattern,
+      ...quantumContext(),
       context: {
         purpose: "matrix-attachment",
         zmathPolicy: "ZMath-Auto-Policy-2",
@@ -933,7 +1037,8 @@ async function openIncomingBody(body) {
     const opened = await openMessage({
       envelope,
       passphrase: sessionPassphrase,
-      patternBytes: sessionPattern
+      patternBytes: sessionPattern,
+      quantumFactorBytes: sessionQuantumFactor
     });
     const display = document.createElement("div");
     display.className = "zmath-auto-opened";
@@ -973,7 +1078,8 @@ async function openShieldAttachment(anchor) {
   const opened = await openContainerPayload({
     container,
     passphrase: sessionPassphrase,
-    patternBytes: sessionPattern
+    patternBytes: sessionPattern,
+    quantumFactorBytes: sessionQuantumFactor
   });
   downloadBytes(
     opened.bytes,
@@ -1045,7 +1151,7 @@ document.addEventListener("change", (event) => {
 window.callchatZMathRequired = true;
 window.callchatZMathCallRequired = true;
 window.callchatZMathAuto = Object.freeze({
-  version: "2026.07.11-auto8",
+  version: "2026.07.11-qfactor1",
   profile: PROFILE,
   isUnlocked,
   isMatrixOnly,

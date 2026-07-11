@@ -14,19 +14,20 @@
     "scope": "Owner-controlled MatrixRTC, self-hosted LiveKit, Matrix device identity, DTLS-SRTP, TURN, frame encryption, and a required in-memory ZMath room factor",
     "user_experience": "The hosted CallChat Shield client blocks protected calls until ZMath is unlocked and a room-scoped media factor is prepared."
   },
-  "ai_quantum_assurance": {
-    "status": "owner_configurable",
-    "ai_routes": ["OpenZero", "OpenAI", "Groq"],
-    "ionq_backends": "simulator or owner-approved QPU",
+  "qpu_factor": {
+    "status": "owner_controlled_hardware_factor_available",
+    "ionq_hardware_backend": "qpu.forte-1",
+    "simulator_role": "contract_test_only",
     "public_api_key": false,
     "browser_secret_exposure": false,
-    "purpose": "Review a non-secret ZShield manifest, hash the assurance record, and bind that commitment to an IonQ quantum job receipt."
+    "key_path": "A browser-local nonce and validated IonQ hardware result digest are combined with HKDF-SHA-512 into a separate factor required by the QPU-factor ZShield and ZMath profiles.",
+    "classification": "Hardware-linked independent encryption factor; not QKD or quantum cryptography"
   },
   "provider_boundary": [
-    "Live media protection and ZMath factor derivation remain inside the CallChat client.",
-    "AI receives only the non-secret assurance manifest.",
-    "IonQ receives only a SHA-256 commitment and returns a job receipt.",
-    "No assurance provider receives another provider's key, a ZMath factor, a Matrix key, call plaintext, or protected-message or file plaintext."
+    "The browser creates the secret nonce and final QPU factor locally.",
+    "IonQ receives only a SHA-256 nonce commitment and the bounded circuit job.",
+    "The CallChat service validates and hashes the IonQ result but never receives the nonce or final factor.",
+    "No AI or IonQ provider receives a ZMath passphrase, pattern, Matrix key, media key, final QPU factor, or protected plaintext."
   ],
   "links": {
     "q_calls": "https://callchat.org/quantum-calls/",

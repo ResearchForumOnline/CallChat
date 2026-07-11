@@ -61,7 +61,7 @@ See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for
 - A local Web Crypto ZShield workspace for messages and files, ZME1 interoperability profile, threat model, test vector, and negative tests.
 - A server-backed Synapse reCAPTCHA registration template with rate limits.
 - Owner-selectable OpenZero, OpenAI, and Groq routing for approved non-secret AI prompts.
-- Provider-isolated IonQ assurance receipts with simulator default and explicit paid-QPU approval.
+- Optional IonQ hardware-linked `.zqf` factors with local derivation, simulator isolation, and per-job paid-QPU approval.
 - Truthful JSON status schemas for Shield and owner-controlled MatrixRTC/Q Calls.
 
 ## What This Repo Does Not Include
@@ -85,9 +85,9 @@ Standard Matrix chat can be self-hosted from this repo. The public ZShield basel
 - Zero Bot uses `matrix-nio[e2e]` with a persistent Olm/Megolm store and explicitly approved rooms.
 - ZShield encrypts chat messages, files, or vault notes locally before users paste the envelope or attach the `.zme1` container.
 - AI providers receive only approved non-secret prompts; ZMath factors, Matrix keys, and protected-message or file plaintext stay outside the provider lane.
-- IonQ assurance receipts bind a SHA-256 commitment to a quantum job ID; IonQ never supplies ZShield keys or receives plaintext.
+- The optional IonQ route combines a browser-local 256-bit nonce with validated hardware result evidence to derive a `.zqf` factor locally. QPU-profile ZShield content and ZMath call roots require that factor; IonQ receives neither the nonce, final factor, keys, nor plaintext.
 - Hosted CallChat web calls require the unlocked ZMath factor and combine it in memory with rotating MatrixRTC media keys before LiveKit frame encryption. The legacy one-to-one fallback is disabled in the hosted profile.
-- Quantum assurance remains isolated from the media key path; standardized post-quantum key establishment and signatures are the controlled upgrade track.
+- This hardware-linked factor is not QKD or quantum cryptography. Standardized post-quantum key establishment and signatures remain the controlled upgrade track.
 
 Reproducible evidence and exact limits: [AI + quantum control release evidence](docs/release-evidence-20260711-ai-quantum-control.md), [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/capability-boundary.md](docs/capability-boundary.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
 

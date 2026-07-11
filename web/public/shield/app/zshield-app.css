@@ -249,6 +249,11 @@
   accent-color: var(--accent);
 }
 
+.quantum-option input[type="file"] {
+  width: 100%;
+  min-width: 0;
+}
+
 .tool-actions {
   display: flex;
   flex-wrap: wrap;
@@ -281,7 +286,7 @@
 
 .shield-evidence {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }

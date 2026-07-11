@@ -1,12 +1,9 @@
 import * as ShieldCore from "./zshield-core.js";
+import {parseQuantumFactorFile} from "./qpu-factor-core.js?v=20260711-qfactor1";
 
 (function () {
   "use strict";
 
-  const FORMAT = "ZME1";
-  const VERSION = 1;
-  const PROFILE = "ZSHIELD-PBKDF2-AESGCM-1";
-  const ITERATIONS = 600000;
   const MAX_BYTES = 50 * 1024 * 1024;
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -16,70 +13,15 @@ import * as ShieldCore from "./zshield-core.js";
 
   const byId = (id) => document.getElementById(id);
 
-  function randomBytes(length) {
-    const value = new Uint8Array(length);
-    crypto.getRandomValues(value);
-    return value;
-  }
-
-  function bytesToBase64(bytes) {
-    let value = "";
-    const chunk = 0x8000;
-    for (let offset = 0; offset < bytes.length; offset += chunk) {
-      value += String.fromCharCode.apply(null, bytes.subarray(offset, offset + chunk));
-    }
-    return btoa(value);
-  }
-
-  function base64ToBytes(value) {
-    const binary = atob(String(value || ""));
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index += 1) {
-      bytes[index] = binary.charCodeAt(index);
-    }
-    return bytes;
-  }
-
-  function concatBytes(parts) {
-    const total = parts.reduce((sum, part) => sum + part.length, 0);
-    const output = new Uint8Array(total);
-    let offset = 0;
-    for (const part of parts) {
-      output.set(part, offset);
-      offset += part.length;
-    }
-    return output;
-  }
-
-  function canonical(value) {
-    if (Array.isArray(value)) {
-      return "[" + value.map(canonical).join(",") + "]";
-    }
-    if (value && typeof value === "object") {
-      return "{" + Object.keys(value).sort().map((key) => JSON.stringify(key) + ":" + canonical(value[key])).join(",") + "}";
-    }
-    return JSON.stringify(value);
-  }
-
-  async function patternDigest(file) {
-    if (!file) return new Uint8Array(32);
-    return new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()));
-  }
-
-  async function deriveKey(passphrase, patternFile, salt, iterations) {
-    if (passphrase.length < 14) {
-      throw new Error("Use a passphrase with at least 14 characters.");
-    }
-    const pattern = await patternDigest(patternFile);
-    const material = concatBytes([encoder.encode(passphrase), new Uint8Array([0]), pattern]);
-    const imported = await crypto.subtle.importKey("raw", material, "PBKDF2", false, ["deriveKey"]);
-    return crypto.subtle.deriveKey(
-      {name: "PBKDF2", hash: "SHA-256", salt, iterations},
-      imported,
-      {name: "AES-GCM", length: 256},
-      false,
-      ["encrypt", "decrypt"]
-    );
+  async function loadQuantumFactor(inputId) {
+    const file = byId(inputId).files[0];
+    if (!file) return {bytes: new Uint8Array(), evidence: null};
+    if (file.size > 32 * 1024) throw new Error("The QPU factor file is too large.");
+    const parsed = await parseQuantumFactorFile(decoder.decode(await file.arrayBuffer()));
+    return {
+      bytes: parsed.factorBytes,
+      evidence: {...parsed.evidence, evidenceDigest: parsed.evidenceDigest}
+    };
   }
 
   function safeName(value) {
@@ -108,24 +50,6 @@ import * as ShieldCore from "./zshield-core.js";
   function setBusy(button, busy, label) {
     button.disabled = busy;
     button.textContent = busy ? "Working locally..." : label;
-  }
-
-  async function ionqResearchReceipt() {
-    if (!byId("ionq-receipt").checked) return "";
-    const nonce = new Uint8Array(32);
-    crypto.getRandomValues(nonce);
-    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", nonce));
-    const commitment = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
-    const response = await fetch("/api/quantum/ionq/receipt", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({commitment})
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.receipt) {
-      throw new Error(result.error && result.error.message || "IonQ assurance receipt is unavailable.");
-    }
-    return String(result.receipt);
   }
 
   async function sourcePayload() {
@@ -176,13 +100,16 @@ import * as ShieldCore from "./zshield-core.js";
       const source = await sourcePayload();
       const patternFile = byId("protect-pattern").files[0] || null;
       const patternBytes = patternFile ? new Uint8Array(await patternFile.arrayBuffer()) : new Uint8Array();
-      const quantumReceipt = await ionqResearchReceipt();
+      const quantumFactor = await loadQuantumFactor("protect-quantum-factor");
       if (source.payloadType === "matrix-message") {
         const protectedMessage = await ShieldCore.protectMessage({
           message: source.message,
           passphrase: password,
           patternBytes,
-          quantumReceipt
+          quantumFactorBytes: quantumFactor.bytes,
+          qpuBackend: quantumFactor.evidence && quantumFactor.evidence.backend,
+          qpuJob: quantumFactor.evidence && quantumFactor.evidence.job_id,
+          qpuEvidenceDigest: quantumFactor.evidence && quantumFactor.evidence.evidenceDigest
         });
         lastMessageEnvelope = protectedMessage.envelope;
         byId("message-output").value = lastMessageEnvelope;
@@ -192,7 +119,14 @@ import * as ShieldCore from "./zshield-core.js";
         byId("message-text").value = "";
         byId("protect-password").value = "";
         byId("protect-confirm").value = "";
-        setResult("Message protected locally", quantumReceipt ? "IonQ simulator receipt authenticated inside the envelope; copy it into a Matrix E2EE room." : "Copy the ZSHIELD1 envelope into a Matrix E2EE room.", "success");
+        setResult(
+          "Message protected locally",
+          quantumFactor.evidence
+            ? "The independent IonQ QPU factor is required to open this envelope. Share it separately from the ciphertext."
+            : "Copy the ZSHIELD1 envelope into a Matrix E2EE room.",
+          "success"
+        );
+        quantumFactor.bytes.fill(0);
         return;
       }
       const container = await ShieldCore.protectPayload({
@@ -202,11 +136,14 @@ import * as ShieldCore from "./zshield-core.js";
         kind: source.payloadType,
         passphrase: password,
         patternBytes,
+        quantumFactorBytes: quantumFactor.bytes,
         context: {
           purpose: source.payloadType === "file" ? "matrix-file" : "vault-note",
           zmathPolicy: "ZMath-Shield-Policy-1",
           transport: "Matrix-E2EE",
-          quantumReceipt
+          qpuBackend: quantumFactor.evidence && quantumFactor.evidence.backend,
+          qpuJob: quantumFactor.evidence && quantumFactor.evidence.job_id,
+          qpuEvidenceDigest: quantumFactor.evidence && quantumFactor.evidence.evidenceDigest
         }
       });
       const blob = new Blob([JSON.stringify(container)], {type: "application/vnd.callchat.zshield+json"});
@@ -219,6 +156,7 @@ import * as ShieldCore from "./zshield-core.js";
       byId("protect-password").value = "";
       byId("protect-confirm").value = "";
       setResult("Protected locally", filename + " is ready to attach in CallChat.", "success");
+      quantumFactor.bytes.fill(0);
     } catch (error) {
       setResult("Protection stopped", error.message || "The payload could not be protected.", "error");
     } finally {
@@ -236,11 +174,13 @@ import * as ShieldCore from "./zshield-core.js";
     try {
       const patternFile = byId("open-pattern").files[0] || null;
       const patternBytes = patternFile ? new Uint8Array(await patternFile.arrayBuffer()) : new Uint8Array();
+      const quantumFactor = await loadQuantumFactor("open-quantum-factor");
       if (byId("open-source-type").value === "message") {
         const openedMessage = await ShieldCore.openMessage({
           envelope: byId("open-message").value,
           passphrase: byId("open-password").value,
-          patternBytes
+          patternBytes,
+          quantumFactorBytes: quantumFactor.bytes
         });
         lastOpenedMessage = openedMessage.message;
         byId("opened-message").value = lastOpenedMessage;
@@ -251,6 +191,7 @@ import * as ShieldCore from "./zshield-core.js";
         byId("copy-opened-button").hidden = false;
         byId("open-password").value = "";
         setResult("Message authenticated and opened", "AES-GCM integrity verification passed before plaintext was shown.", "success");
+        quantumFactor.bytes.fill(0);
         return;
       }
       const file = byId("open-file").files[0];
@@ -260,13 +201,15 @@ import * as ShieldCore from "./zshield-core.js";
       const opened = await ShieldCore.openContainerPayload({
         container,
         passphrase: byId("open-password").value,
-        patternBytes
+        patternBytes,
+        quantumFactorBytes: quantumFactor.bytes
       });
       const output = new Blob([opened.bytes], {type: opened.header.payload.type || "application/octet-stream"});
       const filename = safeName(opened.header.payload.name);
       download(output, filename);
       byId("open-password").value = "";
       setResult("Authenticated and opened", filename + " passed AES-GCM integrity verification.", "success");
+      quantumFactor.bytes.fill(0);
     } catch (error) {
       setResult("Open stopped", error.message || "The container could not be opened.", "error");
     } finally {

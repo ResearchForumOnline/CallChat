@@ -63,8 +63,10 @@ still the original `.docx`, image, or other filename used Matrix protection only
 This is an application-layer control above Matrix. Matrix room encryption and
 device verification remain important. The hosted protected-call profile uses a
 required in-memory ZMath factor with rotating MatrixRTC media keys before
-LiveKit frame encryption. IonQ assurance jobs are provider-isolated receipts
-around that control record and remain outside the encryption key path.
+LiveKit frame encryption. An optional IonQ hardware-linked factor is mixed into
+the ZMath media root before room keys are derived. The final factor remains
+browser-local and must be distributed separately. This is not QKD. AI providers
+remain separate from this operation and outside the encryption key path.
 
 Trusted-device auto-unlock protects stored factors at rest but follows the
 security boundary of the signed-in browser profile. Resetting site data removes
@@ -79,4 +81,5 @@ Run its contract test and the cryptographic tests with:
 ```bash
 node element/zmath-auto/zmath-auto.test.mjs
 node web/public/shield/app/zshield-core.test.mjs
+node web/public/shield/app/qpu-factor-core.test.mjs
 ```

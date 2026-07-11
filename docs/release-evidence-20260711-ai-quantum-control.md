@@ -1,5 +1,9 @@
 # CallChat AI + Quantum Control Release Evidence
 
+> Historical record: the receipt-only IonQ design in this release was
+> superseded on 2026-07-11 by the operational QPU-factor profile documented in
+> [Operational QPU Factor Release Evidence](release-evidence-20260711-qpu-factor.md).
+
 Date: 2026-07-11
 
 Release: `callchat-2026.07.11.7`

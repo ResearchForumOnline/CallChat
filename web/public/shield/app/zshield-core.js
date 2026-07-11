@@ -2,6 +2,7 @@ export const FORMAT = "ZME1";
 export const VERSION = 1;
 export const LEGACY_PROFILE = "ZSHIELD-PBKDF2-AESGCM-1";
 export const PROFILE = "ZMATH-PBKDF2-HKDF-AESGCM-2";
+export const QPU_FACTOR_PROFILE = "ZMATH-PBKDF2-HKDF-AESGCM-QPUFACTOR-3";
 export const ITERATIONS = 600000;
 export const MAX_ITERATIONS = 1200000;
 export const MAX_PAYLOAD_BYTES = 50 * 1024 * 1024;
@@ -51,6 +52,10 @@ function concatBytes(parts) {
   return output;
 }
 
+function bytesToHex(bytes) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export function canonical(value) {
   if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
   if (value && typeof value === "object") {
@@ -62,6 +67,12 @@ export function canonical(value) {
 async function patternDigest(patternBytes) {
   const source = patternBytes && patternBytes.length ? patternBytes : new Uint8Array();
   if (!source.length) return new Uint8Array(32);
+  return new Uint8Array(await crypto.subtle.digest("SHA-256", source));
+}
+
+async function factorDigest(factorBytes) {
+  const source = factorBytes && factorBytes.length ? factorBytes : new Uint8Array();
+  if (!source.length) return new Uint8Array();
   return new Uint8Array(await crypto.subtle.digest("SHA-256", source));
 }
 
@@ -81,7 +92,7 @@ async function deriveLegacyKey(passphrase, patternBytes, salt, iterations) {
   );
 }
 
-async function deriveZMathKey(passphrase, patternBytes, salt, mixSalt, iterations) {
+async function deriveZMathKey(passphrase, patternBytes, salt, mixSalt, iterations, quantumFactorBytes) {
   if (String(passphrase || "").length < 14) {
     throw new Error("Use a passphrase with at least 14 characters.");
   }
@@ -98,12 +109,15 @@ async function deriveZMathKey(passphrase, patternBytes, salt, mixSalt, iteration
     256
   ));
   const imageFactor = await patternDigest(patternBytes);
-  const mixedInput = concatBytes([
+  const factors = [
     encoder.encode(HKDF_INFO),
     new Uint8Array([0]),
     passwordFactor,
     imageFactor
-  ]);
+  ];
+  const quantumFactor = await factorDigest(quantumFactorBytes);
+  if (quantumFactor.length) factors.push(new Uint8Array([0]), quantumFactor);
+  const mixedInput = concatBytes(factors);
   const mixedKey = await crypto.subtle.importKey("raw", mixedInput, "HKDF", false, ["deriveKey"]);
   passwordFactor.fill(0);
   mixedInput.fill(0);
@@ -121,7 +135,7 @@ function validateHeader(header) {
     !header ||
     header.format !== FORMAT ||
     header.version !== VERSION ||
-    ![PROFILE, LEGACY_PROFILE].includes(header.profile)
+    ![PROFILE, QPU_FACTOR_PROFILE, LEGACY_PROFILE].includes(header.profile)
   ) {
     throw new Error("Unsupported or invalid ZME1 container.");
   }
@@ -143,9 +157,13 @@ function validateHeader(header) {
     throw new Error("The container KDF profile is outside the supported bounds.");
   }
   if (
-    header.profile === PROFILE &&
+    [PROFILE, QPU_FACTOR_PROFILE].includes(header.profile) &&
     (
-      header.kdf.name !== "PBKDF2-SHA-256+HKDF-SHA-256" ||
+      header.kdf.name !== (
+        header.profile === QPU_FACTOR_PROFILE
+          ? "PBKDF2-SHA-256+HKDF-SHA-256+EXTERNAL-FACTOR"
+          : "PBKDF2-SHA-256+HKDF-SHA-256"
+      ) ||
       base64ToBytes(header.kdf.mixSalt).length !== 16
     )
   ) {
@@ -154,6 +172,16 @@ function validateHeader(header) {
   if (
     typeof header.kdf.patternRequired !== "boolean"
   ) {
+    throw new Error("The container KDF profile is outside the supported bounds.");
+  }
+  if (header.profile === QPU_FACTOR_PROFILE) {
+    if (
+      header.kdf.quantumFactorRequired !== true ||
+      !/^[a-f0-9]{64}$/.test(String(header.kdf.quantumFactorCommitment || ""))
+    ) {
+      throw new Error("The QPU factor profile is incomplete.");
+    }
+  } else if (header.kdf.quantumFactorRequired === true) {
     throw new Error("The container KDF profile is outside the supported bounds.");
   }
   if (header.cipher.name !== "AES-256-GCM" || Number(header.cipher.tagLength) !== 128) {
@@ -170,7 +198,15 @@ function validateHeader(header) {
     if (!header.context || typeof header.context !== "object" || Array.isArray(header.context)) {
       throw new Error("The authenticated ZMath context is invalid.");
     }
-    for (const [key, limit] of [["purpose", 64], ["zmathPolicy", 128], ["transport", 64], ["quantumReceipt", 256]]) {
+    for (const [key, limit] of [
+      ["purpose", 64],
+      ["zmathPolicy", 128],
+      ["transport", 64],
+      ["quantumReceipt", 256],
+      ["qpuBackend", 64],
+      ["qpuJob", 80],
+      ["qpuEvidenceDigest", 128]
+    ]) {
       if (header.context[key] !== undefined && (typeof header.context[key] !== "string" || header.context[key].length > limit)) {
         throw new Error("The authenticated ZMath context is invalid.");
       }
@@ -184,13 +220,15 @@ export async function protectPayload(options) {
     throw new Error("Choose a payload no larger than 50 MB.");
   }
   const patternBytes = options.patternBytes || new Uint8Array();
+  const quantumFactorBytes = options.quantumFactorBytes || new Uint8Array();
+  const quantumFactor = await factorDigest(quantumFactorBytes);
   const salt = randomBytes(16);
   const mixSalt = randomBytes(16);
   const iv = randomBytes(12);
   const header = {
     format: FORMAT,
     version: VERSION,
-    profile: PROFILE,
+    profile: quantumFactor.length ? QPU_FACTOR_PROFILE : PROFILE,
     payload: {
       name: String(options.name || "payload.bin"),
       type: String(options.type || "application/octet-stream"),
@@ -199,11 +237,14 @@ export async function protectPayload(options) {
     },
     createdAt: options.createdAt || new Date().toISOString(),
     kdf: {
-      name: "PBKDF2-SHA-256+HKDF-SHA-256",
+      name: quantumFactor.length
+        ? "PBKDF2-SHA-256+HKDF-SHA-256+EXTERNAL-FACTOR"
+        : "PBKDF2-SHA-256+HKDF-SHA-256",
       iterations: ITERATIONS,
       salt: bytesToBase64(salt),
       mixSalt: bytesToBase64(mixSalt),
-      patternRequired: patternBytes.length > 0
+      patternRequired: patternBytes.length > 0,
+      quantumFactorRequired: quantumFactor.length > 0
     },
     cipher: {
       name: "AES-256-GCM",
@@ -211,6 +252,9 @@ export async function protectPayload(options) {
       tagLength: 128
     }
   };
+  if (quantumFactor.length) {
+    header.kdf.quantumFactorCommitment = bytesToHex(quantumFactor);
+  }
   if (options.context) {
     header.context = {
       purpose: String(options.context.purpose || "protected-payload"),
@@ -220,9 +264,19 @@ export async function protectPayload(options) {
     if (options.context.quantumReceipt) {
       header.context.quantumReceipt = String(options.context.quantumReceipt);
     }
+    for (const key of ["qpuBackend", "qpuJob", "qpuEvidenceDigest"]) {
+      if (options.context[key]) header.context[key] = String(options.context[key]);
+    }
   }
   validateHeader(header);
-  const key = await deriveZMathKey(options.passphrase, patternBytes, salt, mixSalt, ITERATIONS);
+  const key = await deriveZMathKey(
+    options.passphrase,
+    patternBytes,
+    salt,
+    mixSalt,
+    ITERATIONS,
+    quantumFactorBytes
+  );
   const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
     {name: "AES-GCM", iv, additionalData: encoder.encode(canonical(header)), tagLength: 128},
     key,
@@ -237,8 +291,18 @@ export async function openContainerPayload(options) {
   const header = container.header;
   validateHeader(header);
   const patternBytes = options.patternBytes || new Uint8Array();
+  const quantumFactorBytes = options.quantumFactorBytes || new Uint8Array();
   if (header.kdf.patternRequired && !patternBytes.length) {
     throw new Error("This container requires the sender's pattern file.");
+  }
+  if (header.profile === QPU_FACTOR_PROFILE) {
+    if (!quantumFactorBytes.length) {
+      throw new Error("This container requires the sender's separate QPU factor file.");
+    }
+    const suppliedFactorCommitment = bytesToHex(await factorDigest(quantumFactorBytes));
+    if (suppliedFactorCommitment !== header.kdf.quantumFactorCommitment) {
+      throw new Error("The QPU factor does not match this container.");
+    }
   }
   const ciphertext = base64ToBytes(container.ciphertext);
   if (ciphertext.length !== Number(header.payload.size) + 16) {
@@ -256,7 +320,8 @@ export async function openContainerPayload(options) {
       patternBytes,
       base64ToBytes(header.kdf.salt),
       base64ToBytes(header.kdf.mixSalt),
-      Number(header.kdf.iterations)
+      Number(header.kdf.iterations),
+      header.profile === QPU_FACTOR_PROFILE ? quantumFactorBytes : new Uint8Array()
     );
   let plaintext;
   try {
@@ -314,12 +379,16 @@ export async function protectMessage(options) {
     kind: "matrix-message",
     passphrase: options.passphrase,
     patternBytes: options.patternBytes,
+    quantumFactorBytes: options.quantumFactorBytes,
     createdAt: options.createdAt,
     context: {
       purpose: "matrix-message",
       zmathPolicy: "ZMath-Shield-Policy-1",
       transport: "Matrix-E2EE",
-      quantumReceipt: options.quantumReceipt
+      quantumReceipt: options.quantumReceipt,
+      qpuBackend: options.qpuBackend,
+      qpuJob: options.qpuJob,
+      qpuEvidenceDigest: options.qpuEvidenceDigest
     }
   });
   return {container, envelope: encodeMessageContainer(container)};
@@ -330,7 +399,8 @@ export async function openMessage(options) {
   const opened = await openContainerPayload({
     container,
     passphrase: options.passphrase,
-    patternBytes: options.patternBytes
+    patternBytes: options.patternBytes,
+    quantumFactorBytes: options.quantumFactorBytes
   });
   let message;
   try {

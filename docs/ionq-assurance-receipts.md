@@ -1,30 +1,63 @@
-# IonQ Assurance Receipts
+# Operational IonQ QPU Factor
 
-CallChat's IonQ integration submits a small QIS circuit through the IonQ v0.4
-API. The default backend is the simulator; a server owner can explicitly allow
-a supported QPU. IonQ receives a SHA-256 commitment and returns a traceable job
-receipt that CallChat can bind to a ZShield assurance record.
+CallChat can create an optional hardware-linked factor for ZShield and ZMath.
+This replaces the earlier receipt-only design: when a hardware `.zqf` file is
+loaded, its 256-bit factor is an actual required input to message, file, and
+call-root key derivation. A missing or incorrect factor fails closed.
 
-The provider boundary is strict:
+## Protocol
 
-- no plaintext, passphrase, pattern file, AES key, salt, or IV is sent to IonQ;
-- a failed or unavailable IonQ service does not weaken normal ZShield encryption;
-- the receipt records the quantum assurance job while encryption remains client-side;
-- simulator use is the default and a paid QPU requires explicit owner approval;
-- the API key remains in a protected server-side environment file.
+1. The browser creates a 256-bit random nonce with `crypto.getRandomValues`.
+2. Only the nonce's SHA-256 commitment is sent to the CallChat owner service.
+3. The service submits an eight-qubit Hadamard circuit with 512 shots to an
+   owner-approved IonQ hardware backend through API v0.4.
+4. After completion, the service validates the probability result and returns
+   a domain-separated SHA-512 measurement digest plus bounded job evidence. It
+   also verifies that IonQ's stored job metadata contains the same browser
+   commitment and protocol-purpose markers before accepting the result.
+5. The browser verifies its nonce commitment and applies HKDF-SHA-512 to the
+   local nonce using the measurement digest as salt and the backend, job ID,
+   and commitment as context.
+6. The resulting 256-bit factor is saved locally as a `.zqf` file. The final
+   factor is never sent to IonQ or the CallChat service.
+7. ZShield includes the factor digest and job-evidence digest in authenticated
+   container metadata and mixes the factor digest into its KDF. ZMath Auto also
+   mixes the factor into its room media root before per-room call keys are
+   derived.
 
-The public bridge accepts `POST /v1/quantum/ionq/receipt` with:
+The simulator follows the same API contract for testing, but produces a
+`.zqf-test` file that the production hardware profile rejects.
 
-```json
-{"commitment":"64-lowercase-hex-characters"}
-```
+## Security meaning
 
-Deployments should add strict per-IP and global rate limits at the reverse
-proxy, keep the endpoint same-origin, monitor IonQ quota, and never expose QPU
-selection on a public unauthenticated route.
+This is a **QPU-linked independent encryption factor**, not quantum key
+distribution and not a claim that IonQ performs encryption. The local nonce is
+the factor's secret input. The hardware result changes the derived factor and
+provides auditable provider evidence, but it must not be represented as
+certified quantum randomness or as a replacement for standardized
+post-quantum key establishment.
 
-The owner control-plane design and AI review sequence are documented in
-[Owner-Managed AI and Quantum Assurance](owner-provider-control.md).
+The factor file is a recovery secret. Share it separately from ciphertext and
+protect it like a key. Anyone who has the `.zqf`, passphrase, and exact pattern
+can open matching content.
 
-IonQ's current API contract is documented at:
-<https://docs.ionq.com/api-reference/v0.4/jobs/create-job>.
+## Provider boundary
+
+- IonQ receives no plaintext, passphrase, pattern, Matrix key, media key,
+  encryption key, local nonce, or final factor.
+- The IonQ API key remains in a mode-`0600` server-side provider store.
+- Hardware jobs require both an owner-level paid-QPU permission and a separate
+  confirmation for each submission.
+- The browser control route is owner-authenticated, same-origin, rate-limited,
+  POST-only, and non-cacheable.
+- Closing the owner tab before a job completes discards its pending local nonce;
+  that job then cannot produce a factor and must not be reused.
+
+IonQ API references:
+
+- <https://docs.ionq.com/api-reference/v0.4/jobs/create-job>
+- <https://docs.ionq.com/api-reference/v0.4/jobs/get-job>
+- <https://docs.ionq.com/api-reference/v0.4/results/get-results-by-job-id>
+
+The standardized post-quantum upgrade track is documented in
+[ZShield PQC Roadmap](zshield-pqc-roadmap.md).

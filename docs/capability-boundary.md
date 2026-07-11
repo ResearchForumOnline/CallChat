@@ -13,6 +13,9 @@ badges.
   profile: PBKDF2-SHA-256 and AES-256-GCM.
 - ZMath Auto integration that protects selected composer text and attachments
   locally after the user unlocks it with the required factors.
+- An optional IonQ hardware-linked `.zqf` factor that is mixed into ZShield
+  content keys and the ZMath call media root. Missing or incorrect factors fail
+  closed; simulator output cannot activate the hardware profile.
 - CAPTCHA-protected Matrix registration, a restricted E2EE Matrix bot example,
   public status schemas, and self-hosting templates.
 
@@ -27,7 +30,7 @@ The exact entitlement and support terms on the live checkout page control.
 
 - Standardized post-quantum key establishment and signature integration.
 - Cryptographic agility and migration policy for future protocol upgrades.
-- Provider-isolated IonQ assurance receipts kept outside encryption and key generation.
+- Standardized ML-KEM key establishment and hybrid protocol integration.
 - Further managed recovery, enterprise policy, and deployment automation.
 
 Roadmap items are not presented as deployed cryptographic protection.
@@ -35,7 +38,9 @@ Roadmap items are not presented as deployed cryptographic protection.
 ## Claims CallChat does not make
 
 - Current voice or video packets are quantum encrypted.
-- IonQ hardware creates, stores, or strengthens user encryption keys.
+- The IonQ integration is quantum key distribution, quantum cryptography, or a
+  certified quantum random-number generator.
+- IonQ receives or stores the local nonce, final `.zqf` factor, or user keys.
 - Any encryption system is unbreakable, quantum-proof forever, or a substitute
   for independent security review.
 - A sample interface badge proves the state of a real account or device.
