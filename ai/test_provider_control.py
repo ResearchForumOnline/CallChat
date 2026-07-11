@@ -52,6 +52,7 @@ class ProviderStoreTests(unittest.TestCase):
         public = provider_control.public_provider_status(state)
         self.assertTrue(public["providers"]["openai"]["configured"])
         self.assertNotIn(key, json.dumps(public))
+        self.assertNotIn("fingerprint", json.dumps(public))
 
     def test_rejects_unconfigured_active_provider(self):
         with self.assertRaises(provider_control.ProviderConfigError):

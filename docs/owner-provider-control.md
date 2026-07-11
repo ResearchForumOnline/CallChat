@@ -22,8 +22,8 @@ phrases are routed to local OpenZero instead of a cloud AI provider.
 
 `ai/provider_control.py` provides the reference implementation. Provider URLs
 are fixed in code, model IDs and backend IDs are validated, and API keys are
-kept server-side. Public status responses contain only configured state and a
-short one-way fingerprint, never the key value.
+kept server-side. Public status responses contain only configured and enabled
+state, never the key value or a derivative of it.
 
 ## AI + IonQ Assurance Flow
 

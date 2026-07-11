@@ -9,7 +9,6 @@ file plaintext, or ZME1 payloads from this module's assurance and receipt paths.
 from __future__ import annotations
 
 import copy
-import hashlib
 import json
 import os
 import re
@@ -179,12 +178,6 @@ def provider_key(provider: str, state: dict[str, Any] | None = None) -> str:
     return stored or environment_key(provider)
 
 
-def key_fingerprint(key: str) -> str:
-    if not key:
-        return ""
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
-
-
 def public_provider_status(state: dict[str, Any] | None = None) -> dict[str, Any]:
     current = state or load_provider_state()
     providers: dict[str, Any] = {}
@@ -194,7 +187,6 @@ def public_provider_status(state: dict[str, Any] | None = None) -> dict[str, Any
         status = {
             "configured": bool(key),
             "enabled": bool(details.get("enabled")),
-            "fingerprint": key_fingerprint(key),
             "updated_at": details.get("updated_at") or "",
         }
         if provider in {"openai", "groq"}:

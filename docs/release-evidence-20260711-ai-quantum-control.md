@@ -8,8 +8,8 @@ Release: `callchat-2026.07.11.7`
 
 - Owner-selectable AI routing across local OpenZero, OpenAI, and Groq.
 - Server-side API key storage with `0700` directory and `0600` file policy.
-- Redacted provider status that returns configured state and a one-way
-  fingerprint, never the key value.
+- Redacted provider status that returns configured and enabled state, never the
+  key value or a derivative of it.
 - Fixed provider endpoints, bounded model identifiers, bounded request bodies,
   and cloud fallback to the owner-controlled local route.
 - Secret-pattern detection that keeps likely passwords, API keys, Matrix
