@@ -57,6 +57,7 @@ See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for
 - Docs for DNS, installation, admin tasks, Element setup, TURN calls, OpenZero, updates, and public safety boundaries.
 - Optional AI bot integration notes for OpenZero-style local agents.
 - A runnable Matrix E2EE Zero Bot that refuses unencrypted and allow-all room policies.
+- Durable one-event/one-reply coordination with deterministic Matrix transactions and immediate duplicate-send coalescing.
 - A local Web Crypto ZShield workspace for messages and files, ZME1 interoperability profile, threat model, test vector, and negative tests.
 - A server-backed Synapse reCAPTCHA registration template with rate limits.
 - Owner-selectable OpenZero, OpenAI, and Groq routing for approved non-secret AI prompts.
@@ -240,6 +241,9 @@ The current public offer is the Q Call secure-comms license: USD $55/month or US
 
 The hosted Element experience now has a reviewable, no-AI-API ZMath Auto
 controller for protecting composer messages and selected files in the browser.
+Its default trusted-device flow creates the profile in one action and restores
+it automatically; manual shared-profile, Matrix-only, reset, and diagnostic
+controls remain available under Advanced options.
 Its standards-based cryptographic profile and integration contract are public;
 private research, entitlement services, credentials, and managed recovery remain
 outside this repository. See [ZMath Auto for Element](docs/zmath-auto-element.md).

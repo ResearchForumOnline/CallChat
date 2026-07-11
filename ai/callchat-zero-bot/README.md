@@ -13,6 +13,7 @@ The bot is designed to run as a normal Matrix account, answer only in approved r
 
 - Joins CallChat rooms as `@zero:callchat.org`.
 - Responds to `!zero` commands and direct mentions.
+- Guarantees one reply transaction per Matrix event and coalesces immediate duplicate client sends.
 - Uses local OpenZero first through an OpenAI-compatible endpoint.
 - Can ask Voicebox to generate speech when a user runs `!zero voice ...`.
 - Keeps room memory in RAM only by default.
@@ -21,7 +22,7 @@ The bot is designed to run as a normal Matrix account, answer only in approved r
 
 ## Guardrail Shape
 
-Zero Bot can be sharp, funny, sarcastic, and rebellious against boring defaults. It must not become an uncontrolled public nuisance.
+Zero Bot uses a professional, concise, warm, and confident service voice. Security, privacy, billing, and status answers use precise product language without jokes or sarcasm.
 
 The public default is:
 
@@ -38,7 +39,7 @@ On the server, place the runnable folder somewhere private, for example:
 
 ```bash
 sudo mkdir -p /opt/callchat-zero-bot
-sudo cp zero_matrix_bot_e2ee.py requirements.txt callchat_knowledge.json /opt/callchat-zero-bot/
+sudo cp event_guard.py zero_matrix_bot.py zero_matrix_bot_e2ee.py requirements.txt callchat_knowledge.json /opt/callchat-zero-bot/
 sudo python3 -m venv /opt/callchat-zero-bot/.venv
 sudo /opt/callchat-zero-bot/.venv/bin/pip install -r /opt/callchat-zero-bot/requirements.txt
 sudo chown -R root:root /opt/callchat-zero-bot/.venv
@@ -78,10 +79,18 @@ CALLCHAT_BOT_USER_RATE_WINDOW_SECONDS=60
 CALLCHAT_BOT_ROOM_RATE_BURST=40
 CALLCHAT_BOT_ROOM_RATE_WINDOW_SECONDS=60
 CALLCHAT_BOT_RATE_NOTICE_SECONDS=60
+CALLCHAT_BOT_DUPLICATE_WINDOW_SECONDS=30
+CALLCHAT_BOT_EVENT_RETENTION_DAYS=14
 CALLCHAT_BOT_RATE_EXEMPT_USERS=
 ```
 
 Use `CALLCHAT_BOT_RATE_EXEMPT_USERS` only for trusted Matrix IDs. The default should stay non-empty enough for demos and strict enough for public rooms.
+
+The one-reply ledger persists only SHA-256 digests, processing state, and
+timestamps in the bot's owner-only crypto store. It never stores room
+plaintext, raw event IDs, room IDs, or user IDs. Matrix reply transaction IDs
+are deterministic for the originating event, so a delivery retry resolves to
+the original bot message instead of creating another one.
 
 ## Recommended First Room
 
@@ -97,6 +106,7 @@ Invite `@zero:callchat.org` and test:
 !zero help
 !zero about
 !zero status
+!zero test
 !zero openzero
 !zero voice
 !zero voice Say CallChat ZERO is online.

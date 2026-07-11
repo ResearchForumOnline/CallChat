@@ -105,6 +105,17 @@
   color: var(--zmath-text);
 }
 
+.zmath-auto-simple {
+  display: grid;
+  gap: 8px;
+}
+
+.zmath-auto-simple p {
+  margin: 0;
+  color: var(--zmath-muted);
+  font-size: 12px;
+}
+
 .zmath-auto-field {
   display: grid;
   gap: 5px;
@@ -174,6 +185,16 @@
   cursor: pointer;
 }
 
+.zmath-auto-setup[hidden] {
+  display: none;
+}
+
+.zmath-auto-setup:disabled,
+.zmath-auto-actions button:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
 .zmath-auto-recovery {
   display: grid;
   gap: 8px;
@@ -208,6 +229,49 @@
 
 .zmath-auto-recovery small {
   color: var(--zmath-muted);
+}
+
+.zmath-auto-advanced {
+  margin-top: 14px;
+  border-top: 1px solid var(--zmath-line);
+  padding-top: 2px;
+}
+
+.zmath-auto-advanced summary {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--zmath-text);
+  cursor: pointer;
+  font-weight: 750;
+  list-style: none;
+}
+
+.zmath-auto-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.zmath-auto-advanced summary::after {
+  content: "+";
+  color: var(--zmath-accent);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.zmath-auto-advanced[open] summary::after {
+  content: "-";
+}
+
+.zmath-auto-advanced-body {
+  border-top: 1px solid rgba(40, 65, 74, 0.68);
+  padding-top: 2px;
+  animation: zmath-auto-reveal 140ms ease-out;
+}
+
+@keyframes zmath-auto-reveal {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .zmath-auto-diagnostic {
