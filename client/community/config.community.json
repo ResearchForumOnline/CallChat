@@ -1,0 +1,63 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "https://callchat.org",
+      "server_name": "callchat.org"
+    }
+  },
+  "disable_custom_urls": false,
+  "disable_guests": true,
+  "disable_login_language_selector": false,
+  "disable_3pid_login": false,
+  "force_verification": true,
+  "brand": "CallChat Community",
+  "default_device_display_name": "CallChat Web",
+  "default_country_code": "GB",
+  "default_theme": "dark",
+  "default_federate": true,
+  "mobile_guide_toast": false,
+  "room_directory": {
+    "servers": ["callchat.org"]
+  },
+  "setting_defaults": {
+    "breadcrumbs": true,
+    "UIFeature.voip": true,
+    "UIFeature.widgets": true,
+    "UIFeature.registration": false,
+    "UIFeature.passwordReset": false
+  },
+  "branding": {
+    "welcome_background_url": "/assets/images/callchat-hero-chat.webp",
+    "logo_link_url": "https://callchat.org/",
+    "auth_header_logo_url": "/assets/images/zmath-shield-logo.svg",
+    "auth_footer_links": [
+      {"text": "Create account", "url": "https://callchat.org/chat/"},
+      {"text": "Security", "url": "https://callchat.org/security/"},
+      {"text": "Help", "url": "https://callchat.org/manuals/"},
+      {"text": "Source", "url": "https://github.com/ResearchForumOnline/CallChat"}
+    ]
+  },
+  "embedded_pages": {
+    "home_url": "https://callchat.org/app/callchat-home.html"
+  },
+  "help_url": "https://callchat.org/manuals/",
+  "help_encryption_url": "https://callchat.org/shield/",
+  "help_key_storage_url": "https://callchat.org/shield/",
+  "permalink_prefix": "https://callchat.org/app",
+  "element_call": {
+    "url": "https://callchat.org/app/widgets/element-call/",
+    "brand": "CallChat Calls",
+    "use_exclusively": true
+  },
+  "desktop_builds": {
+    "available": true,
+    "logo": "https://callchat.org/assets/images/zmath-shield-logo.svg",
+    "url": "https://callchat.org/downloads/"
+  },
+  "mobile_builds": {
+    "ios": "https://callchat.org/connect/",
+    "android": "https://callchat.org/connect/",
+    "fdroid": "https://callchat.org/connect/"
+  },
+  "map_style_url": ""
+}

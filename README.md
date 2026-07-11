@@ -2,6 +2,19 @@
 
 Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, an E2EE-only Zero Bot example, owner-controlled MatrixRTC guidance, and a reviewable ZShield ZME1 message-and-file baseline.
 
+The primary hosted client is now CallChat Shield at
+[`callchat.org/app/`](https://callchat.org/app/). The reusable Community
+configuration, command surface, home workspace, branding assets and distribution
+test are public in [`client/community`](client/community/). The full maintained
+client source is published at
+[`ResearchForumOnline/CallChat-Community`](https://github.com/ResearchForumOnline/CallChat-Community),
+based on Element Web `v1.12.23` under its AGPL/GPL licensing terms.
+
+Element remains a supported compatibility client for official mobile and desktop
+apps. The hosted Shield edition uses the same public client with separate
+server-side entitlement, policy, managed recovery and customer operations; it is
+not a hidden proprietary modification of the AGPL web client.
+
 <p align="center">
   <img src="docs/images/callchat-community-hero.svg" alt="CallChat Community self-hosted Matrix server kit" width="100%">
 </p>

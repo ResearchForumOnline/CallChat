@@ -1,0 +1,47 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#66F7FF"/>
+      <stop offset="0.42" stop-color="#1FD8D0"/>
+      <stop offset="1" stop-color="#2086FF"/>
+    </radialGradient>
+    <linearGradient id="shield" x1="296" y1="150" x2="760" y2="846" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F3FEFF"/>
+      <stop offset="0.18" stop-color="#70F6FF"/>
+      <stop offset="0.56" stop-color="#24DCCA"/>
+      <stop offset="1" stop-color="#2477FF"/>
+    </linearGradient>
+    <linearGradient id="shieldDark" x1="342" y1="210" x2="690" y2="748" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#061820"/>
+      <stop offset="1" stop-color="#001014"/>
+    </linearGradient>
+    <filter id="softShadow" x="82" y="72" width="860" height="916" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="42" stdDeviation="42" flood-color="#001217" flood-opacity="0.48"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="#2AEBD5" flood-opacity="0.38"/>
+    </filter>
+    <filter id="zGlow" x="250" y="230" width="530" height="504" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="18" flood-color="#6FF6FF" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="238" fill="#02080D"/>
+  <rect x="1" y="1" width="1022" height="1022" rx="237" fill="url(#bg)" opacity="0.18"/>
+  <g opacity="0.28">
+    <path d="M140 292H884" stroke="#2AEBD5" stroke-width="2"/>
+    <path d="M140 512H884" stroke="#2AEBD5" stroke-width="2"/>
+    <path d="M140 732H884" stroke="#2AEBD5" stroke-width="2"/>
+    <path d="M292 140V884" stroke="#2AEBD5" stroke-width="2"/>
+    <path d="M512 140V884" stroke="#2AEBD5" stroke-width="2"/>
+    <path d="M732 140V884" stroke="#2AEBD5" stroke-width="2"/>
+  </g>
+  <g filter="url(#softShadow)">
+    <path d="M512 118C604 188 702 210 810 224C796 506 699 730 512 884C325 730 228 506 214 224C322 210 420 188 512 118Z" fill="url(#shield)"/>
+    <path d="M512 178C585 232 666 252 754 266C738 500 657 681 512 808C367 681 286 500 270 266C358 252 439 232 512 178Z" fill="url(#shieldDark)"/>
+    <path d="M512 178C585 232 666 252 754 266C738 500 657 681 512 808C367 681 286 500 270 266C358 252 439 232 512 178Z" stroke="#7DFAFF" stroke-width="16" stroke-linejoin="round"/>
+    <path d="M350 302C432 286 476 262 512 236C552 264 607 288 674 302" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" opacity="0.3"/>
+  </g>
+  <g filter="url(#zGlow)">
+    <path d="M350 322H702L468 572H697V704H318L554 454H350V322Z" fill="#F6FEFF"/>
+    <path d="M350 322H702L468 572H697V704H318L554 454H350V322Z" stroke="#9DFFFF" stroke-width="8" stroke-linejoin="round"/>
+  </g>
+  <path d="M780 664C738 748 670 824 512 914C354 824 286 748 244 664" stroke="#2AEBD5" stroke-width="10" stroke-linecap="round" opacity="0.38"/>
+</svg>

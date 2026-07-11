@@ -1,0 +1,160 @@
+:root {
+  --cc-bar-height: 52px;
+  --cc-ink: #eaf8f6;
+  --cc-muted: #9db5b2;
+  --cc-panel: #071315;
+  --cc-border: #294342;
+  --cc-green: #2be0b8;
+  --cc-blue: #48a8ff;
+}
+
+html.callchat-client body {
+  padding-top: var(--cc-bar-height) !important;
+  height: calc(100% - var(--cc-bar-height)) !important;
+  background: #071012;
+}
+
+#callchat-command-bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100000;
+  height: var(--cc-bar-height);
+  display: grid;
+  grid-template-columns: minmax(160px, 230px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--cc-border);
+  background: #071315;
+  color: var(--cc-ink);
+  font: 13px/1.2 Inter, system-ui, sans-serif;
+}
+
+.cc-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: var(--cc-ink);
+  text-decoration: none;
+}
+
+.cc-brand img {
+  width: 34px;
+  height: 34px;
+}
+
+.cc-brand span,
+.cc-brand strong,
+.cc-brand small {
+  display: block;
+  min-width: 0;
+}
+
+.cc-brand strong {
+  font-size: 15px;
+}
+
+.cc-brand small {
+  margin-top: 2px;
+  color: var(--cc-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.cc-commands {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cc-command {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: var(--cc-muted);
+  text-decoration: none;
+}
+
+.cc-command:hover,
+.cc-command:focus-visible {
+  background: #122729;
+  color: var(--cc-ink);
+}
+
+.cc-command span {
+  color: var(--cc-green);
+  font-family: ui-monospace, monospace;
+  font-size: 15px;
+}
+
+.cc-posture {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cc-muted);
+  white-space: nowrap;
+}
+
+.cc-posture i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cc-blue);
+}
+
+.cc-posture[data-state="included"] i {
+  background: var(--cc-green);
+  box-shadow: 0 0 0 3px rgba(43, 224, 184, 0.14);
+}
+
+.mx_AuthPage,
+.mx_AuthBody,
+.mx_AuthPage_modal {
+  border-radius: 8px !important;
+}
+
+.mx_AuthPage_modal {
+  border: 1px solid #315351 !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48) !important;
+}
+
+.mx_AuthHeaderLogo img {
+  width: 82px !important;
+  height: 82px !important;
+  object-fit: contain;
+}
+
+@media (max-width: 760px) {
+  #callchat-command-bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .cc-brand span,
+  .cc-command b,
+  .cc-posture span {
+    display: none;
+  }
+
+  .cc-brand img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cc-commands {
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .cc-command {
+    min-width: 38px;
+    justify-content: center;
+    padding: 0 8px;
+  }
+}
