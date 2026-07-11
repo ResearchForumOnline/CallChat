@@ -25,6 +25,9 @@ jobs:
       - name: ZMath Auto Element contract
         run: node element/zmath-auto/zmath-auto.test.mjs
 
+      - name: CallChat Community client contract
+        run: node client/community/callchat-client.test.mjs
+
       - name: Zero Bot syntax
         run: python3 -m py_compile ai/callchat-zero-bot/zero_matrix_bot_e2ee.py
 

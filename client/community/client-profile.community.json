@@ -1,0 +1,11 @@
+{
+  "edition": "community",
+  "label": "Community",
+  "shield": "optional",
+  "home": "https://callchat.org/",
+  "account": "https://callchat.org/chat/",
+  "security": "https://callchat.org/shield/",
+  "calls": "https://callchat.org/quantum-calls/",
+  "help": "https://callchat.org/manuals/",
+  "source": "https://github.com/ResearchForumOnline/CallChat"
+}
