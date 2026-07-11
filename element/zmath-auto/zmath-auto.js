@@ -1,6 +1,7 @@
 import {
   MESSAGE_PREFIX,
   PROFILE,
+  containerFingerprint,
   openContainerPayload,
   openMessage,
   protectMessage,
@@ -158,6 +159,7 @@ async function generatePatternImage() {
   downloadBytes(pendingPattern, pendingPatternName, "image/png");
   updatePatternMeta();
   toast("Pattern image generated and downloaded. Keep it with your recovery material.");
+  return {bytes: pendingPattern, name: pendingPatternName};
 }
 
 function generatePassphrase() {
@@ -172,6 +174,18 @@ function generatePassphrase() {
     groups.push(value);
   }
   return groups.join("-");
+}
+
+async function createAutomaticSetup() {
+  const passphrase = generatePassphrase();
+  document.getElementById("zmath-auto-passphrase").value = passphrase;
+  await generatePatternImage();
+  const recovery = document.getElementById("zmath-auto-recovery");
+  const recoveryCode = document.getElementById("zmath-auto-recovery-code");
+  recovery.hidden = false;
+  recoveryCode.textContent = passphrase;
+  await unlock();
+  toast("ZMath Auto is active. Save the one-time passphrase separately from the downloaded pattern image.");
 }
 
 function createUi() {
@@ -193,6 +207,13 @@ function createUi() {
     </div>
     <div class="zmath-auto-body">
       <p class="zmath-auto-state" id="zmath-auto-state"></p>
+      <button class="zmath-auto-primary zmath-auto-setup" id="zmath-auto-setup" type="button">Create secure setup automatically</button>
+      <div class="zmath-auto-recovery" id="zmath-auto-recovery" hidden>
+        <strong>Save this passphrase now</strong>
+        <code id="zmath-auto-recovery-code"></code>
+        <button id="zmath-auto-copy-recovery" type="button">Copy passphrase</button>
+        <small>It is shown once and is not stored. Keep it separately from the downloaded pattern image.</small>
+      </div>
       <label class="zmath-auto-field">
         <span>Passphrase</span>
         <input id="zmath-auto-passphrase" type="password" minlength="14" autocomplete="current-password">
@@ -217,6 +238,10 @@ function createUi() {
         <button id="zmath-auto-lock" type="button">Lock</button>
         <button class="zmath-auto-danger" id="zmath-auto-forget" type="button">Forget device image</button>
       </div>
+      <div class="zmath-auto-diagnostic">
+        <button id="zmath-auto-self-test" type="button">Run encryption self-test</button>
+        <p id="zmath-auto-self-test-result">Not run in this session.</p>
+      </div>
       <p class="zmath-auto-meta">Profile: <span id="zmath-auto-profile"></span></p>
     </div>`;
   const toastElement = document.createElement("div");
@@ -231,6 +256,15 @@ function createUi() {
   });
   panel.querySelector(".zmath-auto-close").addEventListener("click", () => {
     panel.hidden = true;
+  });
+  document.getElementById("zmath-auto-setup").addEventListener("click", () => {
+    createAutomaticSetup().catch(showError);
+  });
+  document.getElementById("zmath-auto-copy-recovery").addEventListener("click", async () => {
+    const value = document.getElementById("zmath-auto-recovery-code").textContent || "";
+    if (!value) return;
+    await navigator.clipboard.writeText(value);
+    toast("Passphrase copied. Store it separately from the pattern image.");
   });
   document.getElementById("zmath-auto-generate-pass").addEventListener("click", () => {
     const passphrase = generatePassphrase();
@@ -258,6 +292,9 @@ function createUi() {
     lock();
     updatePatternMeta();
     toast("Encrypted device image removed.");
+  });
+  document.getElementById("zmath-auto-self-test").addEventListener("click", () => {
+    runSelfTest().catch(showError);
   });
   document.getElementById("zmath-auto-matrix-only").addEventListener("change", (event) => {
     setMatrixOnly(event.target.checked);
@@ -348,6 +385,38 @@ function lock() {
 
 function showError(error) {
   toast(error instanceof Error ? error.message : "ZMath operation failed.");
+}
+
+async function runSelfTest() {
+  if (!isUnlocked()) throw new Error("Unlock ZMath before running the encryption self-test.");
+  const plaintext = randomBytes(1024);
+  const container = await protectPayload({
+    bytes: plaintext,
+    name: "callchat-zmath-self-test.bin",
+    type: "application/octet-stream",
+    kind: "diagnostic",
+    passphrase: sessionPassphrase,
+    patternBytes: sessionPattern,
+    context: {
+      purpose: "local-self-test",
+      zmathPolicy: "ZMath-Auto-Policy-2",
+      transport: "local-only"
+    }
+  });
+  const opened = await openContainerPayload({
+    container,
+    passphrase: sessionPassphrase,
+    patternBytes: sessionPattern
+  });
+  const matches = opened.bytes.length === plaintext.length && opened.bytes.every((byte, index) => byte === plaintext[index]);
+  plaintext.fill(0);
+  opened.bytes.fill(0);
+  if (!matches) throw new Error("ZMath self-test failed. Do not send protected content from this session.");
+  const fingerprint = await containerFingerprint(container);
+  const result = document.getElementById("zmath-auto-self-test-result");
+  result.textContent = `Passed · authenticated 1 KB round-trip · ${fingerprint}`;
+  result.dataset.state = "passed";
+  toast("ZMath self-test passed. Encryption, authentication and local decryption are working.");
 }
 
 let toastTimer;
@@ -450,32 +519,11 @@ async function protectSelectedFiles(input) {
     toast("Unlock ZMath before attaching files.");
     return;
   }
-  for (const file of files) {
-    if (file.size > MAX_AUTO_FILE_BYTES) throw new Error("Choose files no larger than 50 MB.");
-  }
   busy = true;
   try {
     const transfer = new DataTransfer();
-    for (const file of files) {
-      const container = await protectPayload({
-        bytes: new Uint8Array(await file.arrayBuffer()),
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        kind: "matrix-attachment",
-        passphrase: sessionPassphrase,
-        patternBytes: sessionPattern,
-        context: {
-          purpose: "matrix-attachment",
-          zmathPolicy: "ZMath-Auto-Policy-2",
-          transport: "Matrix-E2EE"
-        }
-      });
-      transfer.items.add(new File(
-        [JSON.stringify(container)],
-        `${file.name}.zme1`,
-        {type: "application/json"}
-      ));
-    }
+    const protectedFiles = await prepareFiles(files);
+    for (const file of protectedFiles) transfer.items.add(file);
     input.files = transfer.files;
     bypassFile = true;
     input.dispatchEvent(new Event("change", {bubbles: true}));
@@ -486,6 +534,46 @@ async function protectSelectedFiles(input) {
   } finally {
     busy = false;
   }
+}
+
+async function prepareFiles(files) {
+  const selected = Array.from(files || []);
+  if (!selected.length) return [];
+  if (isMatrixOnly()) return selected;
+  if (!isUnlocked()) {
+    const panel = document.getElementById("zmath-auto-panel");
+    if (panel) panel.hidden = false;
+    toast("Upload blocked: unlock ZMath or explicitly choose Matrix-only sending.");
+    throw new Error("ZMath Auto is locked.");
+  }
+  const output = [];
+  for (const file of selected) {
+    if (/\.zme1$/i.test(file.name) && file.type === "application/json") {
+      output.push(file);
+      continue;
+    }
+    if (file.size > MAX_AUTO_FILE_BYTES) throw new Error("Choose files no larger than 50 MB.");
+    const container = await protectPayload({
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      name: file.name,
+      type: file.type || "application/octet-stream",
+      kind: "matrix-attachment",
+      passphrase: sessionPassphrase,
+      patternBytes: sessionPattern,
+      context: {
+        purpose: "matrix-attachment",
+        zmathPolicy: "ZMath-Auto-Policy-2",
+        transport: "Matrix-E2EE"
+      }
+    });
+    output.push(new File(
+      [JSON.stringify(container)],
+      `${file.name}.zme1`,
+      {type: "application/json"}
+    ));
+  }
+  toast(`${output.length} attachment${output.length === 1 ? "" : "s"} protected as ZME1 before upload.`);
+  return output;
 }
 
 async function openIncomingBody(body) {
@@ -602,6 +690,14 @@ document.addEventListener("change", (event) => {
   event.stopImmediatePropagation();
   protectSelectedFiles(input).catch(showError);
 }, true);
+
+window.callchatZMathRequired = true;
+window.callchatZMathAuto = Object.freeze({
+  profile: PROFILE,
+  isUnlocked,
+  isMatrixOnly,
+  prepareFiles
+});
 
 new MutationObserver(queueIncomingScan).observe(document.documentElement, {
   childList: true,
