@@ -25,3 +25,14 @@ data cleanup may remove the trusted local copy and require another import.
 This document describes product behavior only. It intentionally excludes private
 ZMath source, cryptographic internals, credentials, recovery material, and
 production account information.
+
+## Mobile Rooms And Zero Bot
+
+The hosted client presents one primary panel at phone widths: the chat list or the
+active room. Opening a room replaces the list, and a back-to-chats control returns
+to it.
+
+Zero Bot cannot read locally protected ZMath envelopes without private user factors.
+Text prompts in the approved Zero Bot Lab therefore use Matrix end-to-end
+encryption so the bot can answer as a room member. The client labels this room
+boundary, and it never sends the ZMath passphrase or pattern image to the bot.
