@@ -11,23 +11,20 @@
   },
   "q_call_layer": {
     "status": "zshield_protected_call_path_active",
-    "scope": "Owner-controlled MatrixRTC, self-hosted LiveKit, Matrix device identity, DTLS-SRTP, TURN, frame encryption, and a required in-memory ZMath room factor",
-    "user_experience": "The hosted CallChat Shield client blocks protected calls until ZMath is unlocked and a room-scoped media factor is prepared."
+    "scope": "Owner-controlled MatrixRTC, self-hosted LiveKit, Matrix device identity, DTLS-SRTP, TURN, frame encryption, and licensed Shield policy where enabled",
+    "user_experience": "The hosted client presents verified call and Shield status without exposing recovery or media-key implementation details."
   },
   "qpu_factor": {
-    "status": "owner_controlled_hardware_factor_available",
-    "ionq_hardware_backend": "qpu.forte-1",
-    "simulator_role": "contract_test_only",
+    "status": "licensed_optional_provider_workflow",
     "public_api_key": false,
     "browser_secret_exposure": false,
-    "key_path": "A browser-local nonce and validated IonQ hardware result digest are combined with HKDF-SHA-512 into a separate factor required by the QPU-factor ZShield and ZMath profiles.",
-    "classification": "Hardware-linked independent encryption factor; not QKD or quantum cryptography"
+    "classification": "Separately licensed provider workflow; not QKD or quantum cryptography",
+    "public_boundary": "Implementation, derivation, recovery, and entitlement details are not published in the community repository."
   },
   "provider_boundary": [
-    "The browser creates the secret nonce and final QPU factor locally.",
-    "IonQ receives only a SHA-256 nonce commitment and the bounded circuit job.",
-    "The CallChat service validates and hashes the IonQ result but never receives the nonce or final factor.",
-    "No AI or IonQ provider receives a ZMath passphrase, pattern, Matrix key, media key, final QPU factor, or protected plaintext."
+    "Provider credentials remain server-side.",
+    "No AI or quantum provider should receive Matrix keys, recovery material, protected plaintext, or final local content keys.",
+    "Optional provider work remains separate from the deployed MatrixRTC and LiveKit media-encryption foundation."
   ],
   "links": {
     "q_calls": "https://callchat.org/quantum-calls/",

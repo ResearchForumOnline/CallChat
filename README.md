@@ -1,6 +1,6 @@
 # CallChat Community
 
-Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, an E2EE-only Zero Bot example, owner-controlled MatrixRTC guidance, and a reviewable ZShield ZME1 message-and-file baseline.
+Self-hosted Matrix chat with a CallChat front door, a branded Element Web profile, Synapse/PostgreSQL templates, an E2EE-only Zero Bot example, owner-controlled MatrixRTC guidance, and documented extension points for separately licensed Shield features.
 
 The primary hosted client is now CallChat Shield at
 [`callchat.org/app/`](https://callchat.org/app/). The reusable Community
@@ -12,8 +12,8 @@ based on Element Web `v1.12.23` under its AGPL/GPL licensing terms.
 
 Element remains a supported compatibility client for official mobile and desktop
 apps. The hosted Shield edition uses the same public client with separate
-server-side entitlement, policy, managed recovery and customer operations; it is
-not a hidden proprietary modification of the AGPL web client.
+licensed entitlement, policy, recovery, browser modules and customer operations.
+Those premium modules are not distributed by this community repository.
 
 <p align="center">
   <img src="docs/images/callchat-community-hero.svg" alt="CallChat Community self-hosted Matrix server kit" width="100%">
@@ -29,14 +29,14 @@ not a hidden proprietary modification of the AGPL web client.
 
 ## Q Call Secure Comms License
 
-Q Call is the commercial CallChat secure-communications offer for teams that want private calls, messages, and protected files on infrastructure they control. The standards-based ZME1 browser baseline is public and testable; premium entitlement, managed recovery, enterprise policy, and private ZMath research remain separate.
+Q Call is the commercial CallChat secure-communications offer for teams that want private calls, messages, and protected files on infrastructure they control. Public materials document customer outcomes and security boundaries; premium implementation, entitlement, recovery, policy, and private ZMath research remain separate.
 
 - Live license page: [callchat.org/license](https://callchat.org/license/)
 - Pricing: USD $55 per month or USD $550 per year.
 - Scope: unlimited users on one approved public server IP per license.
 - Buyer path: live capture page, direct buy button, and follow-up route for setup questions.
-- Current call layer: hosted CallChat web calls use MatrixRTC/LiveKit frame E2EE with a required in-memory ZMath factor; WebRTC transport protection and TURN remain in the path.
-- Current local protection: the public ZME1 baseline creates an authenticated AES-256-GCM container in the browser before Matrix uploads the file.
+- Current call layer: hosted CallChat web calls use the owner-controlled MatrixRTC/LiveKit stack, WebRTC transport protection, TURN, and licensed Shield policy where enabled.
+- Current local protection: licensed Shield workflows protect selected content locally before it is handed to Matrix.
 - Roadmap: reviewed adoption of standardized post-quantum key establishment and signatures; no claim that current live audio is quantum encrypted.
 
 See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for the buyer profile, sales flow, claim wording, and public/private boundary.
@@ -58,10 +58,10 @@ See [docs/qcall-secure-comms-license.md](docs/qcall-secure-comms-license.md) for
 - Optional AI bot integration notes for OpenZero-style local agents.
 - A runnable Matrix E2EE Zero Bot that refuses unencrypted and allow-all room policies.
 - Durable one-event/one-reply coordination with deterministic Matrix transactions and immediate duplicate-send coalescing.
-- A local Web Crypto ZShield workspace for messages and files, ZME1 interoperability profile, threat model, test vector, and negative tests.
+- A public capability boundary and threat model for separately licensed Shield workflows.
 - A same-origin local arithmetic-CAPTCHA registration service with one-time challenges and layered rate limits.
 - Owner-selectable OpenZero, OpenAI, and Groq routing for approved non-secret AI prompts.
-- Optional IonQ hardware-linked `.zqf` factors with local derivation, simulator isolation, and per-job paid-QPU approval.
+- Optional server-side IonQ assurance receipts with simulator defaults and explicit paid-QPU approval.
 - Truthful JSON status schemas for Shield and owner-controlled MatrixRTC/Q Calls.
 
 ## What This Repo Does Not Include
@@ -77,19 +77,18 @@ This public repository does not include private deployment material:
 - Production backups.
 - Private entitlement or licensing code.
 
-Standard Matrix chat can be self-hosted from this repo. The public ZShield baseline creates authenticated local messages and `.zme1` files through Web Crypto. The hosted protected-call profile adds a required in-memory ZMath factor to rotating MatrixRTC media keys before LiveKit frame encryption.
+Standard Matrix chat can be self-hosted from this repo. Licensed Shield/ZMath automation, protected-container implementation, hosted call policy, entitlement, and recovery modules are distributed separately and are not granted under this repository's MIT license.
 
 ## Verified Security Baseline
 
 - Current CallChat rooms are configured with Matrix Megolm E2EE. Encryption protects new encrypted events; it does not retroactively encrypt earlier room history.
 - Zero Bot uses `matrix-nio[e2e]` with a persistent Olm/Megolm store and explicitly approved rooms.
-- ZShield encrypts chat messages, files, or vault notes locally before users paste the envelope or attach the `.zme1` container.
-- AI providers receive only approved non-secret prompts; ZMath factors, Matrix keys, and protected-message or file plaintext stay outside the provider lane.
-- The optional IonQ route combines a browser-local 256-bit nonce with validated hardware result evidence to derive a `.zqf` factor locally. QPU-profile ZShield content and ZMath call roots require that factor; IonQ receives neither the nonce, final factor, keys, nor plaintext.
-- Hosted CallChat web calls require the unlocked ZMath factor and combine it in memory with rotating MatrixRTC media keys before LiveKit frame encryption. The legacy one-to-one fallback is disabled in the hosted profile.
-- This hardware-linked factor is not QKD or quantum cryptography. Standardized post-quantum key establishment and signatures remain the controlled upgrade track.
+- AI providers are restricted to approved non-secret prompts. Matrix keys, recovery material, protected content, and provider credentials stay outside that lane.
+- Hosted Shield and Q-Call features are licensed product modules, not community-repository features.
+- Q-Calls use the deployed MatrixRTC/LiveKit media stack. CallChat does not claim that current audio or video is quantum encrypted.
+- Optional quantum-service features are separately bounded evidence or licensed-factor workflows, not QKD or a replacement for standardized post-quantum cryptography.
 
-Reproducible evidence and exact limits: [AI + quantum control release evidence](docs/release-evidence-20260711-ai-quantum-control.md), [docs/release-evidence-20260710.md](docs/release-evidence-20260710.md), [docs/capability-boundary.md](docs/capability-boundary.md), [docs/zme1-public-profile-v1.md](docs/zme1-public-profile-v1.md), and [docs/zshield-threat-model-v1.md](docs/zshield-threat-model-v1.md).
+Public limits and disclosure rules: [capability boundary](docs/capability-boundary.md), [Shield boundary](docs/zmath-boundary.md), [threat model](docs/zshield-threat-model-v1.md), and [12 July 2026 public release note](docs/public-release-20260712.md).
 
 ## Layered File Protection
 
@@ -100,11 +99,10 @@ Matrix applies its own encrypted attachment and room-event layers:
 Original document
         |
         v
-ZMath passphrase + exact pattern
+Licensed local Shield protection
         |
         v
-Authenticated AES-256-GCM ZME1 container
-filename.docx.zme1
+Protected file container
         |
         v
 Matrix A256CTR encrypted attachment
@@ -235,21 +233,18 @@ CallChat Shield / ZMath is an optional premium vault layer for protected files a
 - Licensing model.
 - What clients should show when a Shield file is present.
 
-It publishes the standards-based ZME1 reference implementation, but not proprietary premium policy or private ZMath research. See [docs/zmath-boundary.md](docs/zmath-boundary.md), [docs/owner-provider-control.md](docs/owner-provider-control.md), [docs/ionq-assurance-receipts.md](docs/ionq-assurance-receipts.md), and [docs/matrix-captcha-registration.md](docs/matrix-captcha-registration.md).
+It does not publish the premium browser implementation, container construction, media-factor logic, entitlement code, policy service, or private ZMath research. See [docs/zmath-boundary.md](docs/zmath-boundary.md), [docs/owner-provider-control.md](docs/owner-provider-control.md), and [docs/matrix-captcha-registration.md](docs/matrix-captcha-registration.md).
 
-The current public offer is the Q Call secure-comms license: USD $55/month or USD $550/year for unlimited users on one approved public server IP. The public repo documents the offer, customer flow, public cryptographic baseline, and safe integration points; private research, credentials, entitlement logic, and managed recovery stay outside GitHub.
+Modified AGPL/GPL clients must continue to publish the corresponding source required by their licenses. Public integration hooks and modified media-client code in those source repositories are open implementation, not trade secrets. Private commercial IP must remain in separately designed modules that can lawfully stay outside that corresponding-source obligation.
 
-The hosted Element experience now has a reviewable, no-AI-API ZMath Auto
-controller for protecting composer messages and selected files in the browser.
-Its default trusted-device flow creates the profile in one action and restores
-it automatically; manual shared-profile, Matrix-only, reset, and diagnostic
-controls remain available under Advanced options.
-Its standards-based cryptographic profile and integration contract are public;
-private research, entitlement services, credentials, and managed recovery remain
-outside this repository. See [ZMath Auto for Element](docs/zmath-auto-element.md).
+The current public offer is the Q Call secure-comms license: USD $55/month or USD $550/year for unlimited users on one approved public server IP. The public repo documents the offer, customer flow, security boundary, and safe integration points; private research, credentials, entitlement logic, and managed recovery stay outside GitHub.
+
+The hosted service can provide automatic Shield workflows through a separately
+licensed module. Community deployments retain Matrix-compatible messaging and
+the documented extension boundary without receiving premium implementation source.
 
 ## License
 
-CallChat Community files in this repository are released under the MIT License unless a file states otherwise.
+CallChat Community files remaining in this repository are released under the MIT License unless a file states otherwise. Shield/ZMath premium modules, hosted production assets, private research, and licensed implementation code are not included and are not licensed by this repository.
 
 Third-party projects such as Synapse, Element Web, Matrix SDKs, Docker images, and operating system packages keep their own licenses. Check [NOTICE.md](NOTICE.md) before redistributing combined builds.

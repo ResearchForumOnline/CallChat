@@ -61,7 +61,7 @@
           ZShield adds a separate encrypted payload you can paste, attach, and forward.
         </p>
         <div class="page-actions">
-          <a class="button primary" href="/shield/app/">Open ZShield workspace</a>
+          <a class="button primary" href="https://callchat.org/shield/">View hosted Shield</a>
           <a class="button secondary" href="/element/#/login">Open CallChat</a>
           <a class="button ghost" href="/license/">Founding pilot</a>
         </div>
@@ -69,12 +69,11 @@
 
       <section class="product-band">
         <div>
-          <p class="eyebrow">Working hosted MVP</p>
-          <h2>The protected-message and file paths are live and testable.</h2>
+          <p class="eyebrow">Licensed hosted service</p>
+          <h2>Protected-message and file workflows are supplied separately.</h2>
           <p>
-            The current workspace uses a deliberate passphrase and an optional pattern file, derives a local key,
-            and applies AES-256-GCM authentication before download. Automatic account vault and recovery management
-            remain a later reviewed milestone and are not claimed as active today.
+            The community repository documents the product boundary and Matrix integration points. The licensed
+            implementation, policy controls, recovery workflow, and premium browser module are not distributed here.
           </p>
           <p>
             Standard Matrix chat remains free. Shield is additive: use the workspace to protect selected messages,
@@ -108,10 +107,9 @@
           </article>
         </div>
         <p class="notice">
-          The hosted MVP uses reviewable standard Web Crypto primitives. Premium entitlement, managed recovery,
-          enterprise policy, and managed recovery remain separate from this security baseline. Owners can optionally
-          add a separately held IonQ hardware-linked factor that is required by the selected ZShield KDF profile.
-          It is not QKD or a claim that IonQ performs encryption.
+          The hosted service uses standard, reviewable cryptographic controls while keeping licensed automation,
+          policy, recovery, and provider-integration details outside this community distribution. Optional quantum
+          service features are not QKD and are not represented as quantum encryption.
         </p>
       </section>
 
@@ -119,7 +117,7 @@
         <article class="license-card">
           <span>Hosted</span>
           <h2>CallChat</h2>
-          <p>Free hosted workspace for protecting and opening ZME1 files and vault notes locally.</p>
+          <p>Hosted access to approved Shield workflows for active CallChat accounts.</p>
           <strong>$0</strong>
           <a class="button secondary" href="/connect/">Start with CallChat</a>
         </article>

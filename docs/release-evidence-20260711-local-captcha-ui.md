@@ -31,4 +31,4 @@ The signup card remains page-scrollable when its fields exceed the viewport.
 - The protected secret file was verified as service-group-readable, not public.
 - No current registration, Synapse, or version-lock error entries remained.
 - Version-lock verification passed across 15 application and registration files.
-- ZMath Auto, ZShield, QPU-factor, and community-client contracts passed.
+- Community-client and registration contracts passed; licensed Shield tests run in the private release lane.

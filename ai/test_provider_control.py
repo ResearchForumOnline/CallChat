@@ -33,7 +33,7 @@ class ProviderStoreTests(unittest.TestCase):
 
     @patch.dict(os.environ, {}, clear=False)
     def test_writes_owner_only_store_and_redacts_status(self):
-        key = "sk-test-provider-key-1234567890"
+        key = "test-openai-key-value"
         state = provider_control.update_provider_state(
             {
                 "active_ai_provider": "openai",
@@ -68,7 +68,7 @@ class ProviderStoreTests(unittest.TestCase):
                     "active_ai_provider": "openai",
                     "providers": {
                         "openai": {
-                            "api_key": "sk-test-provider-key-1234567890",
+                            "api_key": "test-openai-key-value",
                             "enabled": False,
                         }
                     },
@@ -100,12 +100,15 @@ class ProviderRequestTests(unittest.TestCase):
             {"data": [{"id": "gpt-5.5"}, {"id": "gpt-5.4-mini"}]}
         )
         result = provider_control.test_provider_key(
-            "openai", "sk-test-provider-key-1234567890"
+            "openai", "test-openai-key-value"
         )
         self.assertTrue(result["valid"])
         self.assertIn("gpt-5.5", result["models"])
         request = urlopen.call_args.args[0]
-        self.assertEqual(request.full_url, provider_control.PROVIDER_ENDPOINTS["openai"]["models"])
+        self.assertEqual(
+            request.full_url,
+            provider_control.PROVIDER_ENDPOINTS["openai"]["models"],
+        )
         self.assertTrue(request.headers["Authorization"].startswith("Bearer "))
 
     @patch("provider_control.urllib.request.urlopen")
@@ -113,7 +116,7 @@ class ProviderRequestTests(unittest.TestCase):
         urlopen.return_value = FakeResponse(
             {"choices": [{"message": {"content": "Provider route ready."}}]}
         )
-        key = "sk-test-provider-key-1234567890"
+        key = "test-openai-key-value"
         state = provider_control.default_provider_state()
         state["active_ai_provider"] = "openai"
         state["providers"]["openai"].update(
@@ -144,119 +147,14 @@ class ProviderRequestTests(unittest.TestCase):
                 "backend": "simulator",
             }
         )
-        commitment = "a" * 64
-        result, error = provider_control.ionq_receipt(commitment, state=state)
+        result, error = provider_control.ionq_receipt("a" * 64, state=state)
         self.assertIsNone(error)
         self.assertFalse(result["key_material"])
         request = urlopen.call_args.args[0]
         body = json.loads(request.data)
-        self.assertEqual(body["metadata"]["commitment"], commitment)
         self.assertNotIn("plaintext", body)
         self.assertNotIn("passphrase", body)
         self.assertNotIn("api_key", body)
-
-    @patch("provider_control.urllib.request.urlopen")
-    def test_ionq_factor_job_uses_measurements_without_client_secret(self, urlopen):
-        urlopen.return_value = FakeResponse(
-            {"id": "019f52ea-8506-74f8-acb1-2699c0a8fcec", "status": "submitted"}
-        )
-        state = provider_control.default_provider_state()
-        state["providers"]["ionq"].update(
-            {
-                "api_key": "ionq-test-key-1234567890",
-                "enabled": True,
-                "backend": "simulator",
-            }
-        )
-        commitment = "b" * 64
-        result, error = provider_control.ionq_submit_factor_job(commitment, state=state)
-        self.assertIsNone(error)
-        self.assertEqual(result["source_class"], "simulator-test")
-        self.assertFalse(result["final_factor_material"])
-        request = urlopen.call_args.args[0]
-        body = json.loads(request.data)
-        self.assertEqual(body["shots"], 512)
-        self.assertEqual(body["input"]["qubits"], 8)
-        self.assertEqual(len(body["input"]["circuit"]), 8)
-        self.assertEqual(body["metadata"]["client_commitment"], commitment)
-        self.assertNotIn("client_secret", json.dumps(body))
-        self.assertNotIn("final_factor", json.dumps(body))
-
-    @patch("provider_control.urllib.request.urlopen")
-    def test_ionq_completed_factor_returns_validated_measurement_digest(self, urlopen):
-        job_id = "019f52ea-8506-74f8-acb1-2699c0a8fcec"
-        urlopen.side_effect = [
-            FakeResponse(
-                {
-                    "id": job_id,
-                    "status": "completed",
-                    "backend": "qpu.forte-1",
-                    "completed_at": "2026-07-11T20:00:00Z",
-                    "metadata": {
-                        "purpose": "callchat-qpu-factor-v1",
-                        "client_commitment": "c" * 64,
-                        "security_boundary": "no-final-factor-or-plaintext",
-                    },
-                }
-            ),
-            FakeResponse({"0": 0.25, "1": 0.25, "2": 0.25, "3": 0.25}),
-        ]
-        state = provider_control.default_provider_state()
-        state["providers"]["ionq"].update(
-            {
-                "api_key": "ionq-test-key-1234567890",
-                "enabled": True,
-                "backend": "qpu.forte-1",
-                "allow_paid_qpu": True,
-            }
-        )
-        result, error = provider_control.ionq_factor_job(job_id, "c" * 64, state=state)
-        self.assertIsNone(error)
-        self.assertEqual(result["source_class"], "qpu-measurement")
-        self.assertTrue(result["measurement_contribution"])
-        self.assertRegex(result["measurement_sha512"], r"^[a-f0-9]{128}$")
-        self.assertRegex(result["result_sha256"], r"^[a-f0-9]{64}$")
-        self.assertNotIn("probabilities", result)
-
-    @patch("provider_control.urllib.request.urlopen")
-    def test_ionq_factor_rejects_a_different_job_commitment(self, urlopen):
-        job_id = "019f52ea-8506-74f8-acb1-2699c0a8fcec"
-        urlopen.return_value = FakeResponse(
-            {
-                "id": job_id,
-                "status": "completed",
-                "backend": "simulator",
-                "metadata": {
-                    "purpose": "callchat-qpu-factor-v1",
-                    "client_commitment": "e" * 64,
-                    "security_boundary": "no-final-factor-or-plaintext",
-                },
-            }
-        )
-        state = provider_control.default_provider_state()
-        state["providers"]["ionq"].update(
-            {"api_key": "ionq-test-key-1234567890", "enabled": True}
-        )
-        result, error = provider_control.ionq_factor_job(job_id, "f" * 64, state=state)
-        self.assertIsNone(result)
-        self.assertIn("does not match", error)
-        self.assertEqual(urlopen.call_count, 1)
-
-    @patch("provider_control.urllib.request.urlopen")
-    def test_ionq_hardware_factor_requires_per_job_cost_confirmation(self, urlopen):
-        state = provider_control.default_provider_state()
-        state["providers"]["ionq"].update(
-            {
-                "api_key": "ionq-test-key-1234567890",
-                "enabled": True,
-                "backend": "qpu.forte-1",
-                "allow_paid_qpu": True,
-            }
-        )
-        result, error = provider_control.ionq_submit_factor_job("d" * 64, state=state)
-        self.assertIsNone(result)
-        self.assertIn("Confirm paid QPU use", error)
-        urlopen.assert_not_called()
 
 
 if __name__ == "__main__":

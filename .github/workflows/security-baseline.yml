@@ -19,13 +19,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: ZME1 crypto tests
-        run: |
-          node web/public/shield/app/zshield-core.test.mjs
-          node web/public/shield/app/qpu-factor-core.test.mjs
-
-      - name: ZMath Auto Element contract
-        run: node element/zmath-auto/zmath-auto.test.mjs
+      - name: Public disclosure boundary
+        run: bash scripts/check-public-boundary.sh
 
       - name: CallChat Community client contract
         run: node client/community/callchat-client.test.mjs
@@ -41,7 +36,7 @@ jobs:
           python3 -m py_compile ai/callchat-zero-bot/event_guard.py ai/callchat-zero-bot/zero_matrix_bot.py ai/callchat-zero-bot/zero_matrix_bot_e2ee.py
           python3 -m unittest discover -s ai/callchat-zero-bot -p 'test_*.py' -v
 
-      - name: Provider and IonQ factor boundary
+      - name: Provider and IonQ assurance boundary
         run: |
           python3 -m py_compile ai/provider_control.py ai/zero_agent_bridge.py ai/test_provider_control.py ai/test_zero_agent_bridge.py
           python3 -m unittest discover -s ai -p 'test_*.py' -v
@@ -50,4 +45,3 @@ jobs:
         run: |
           python3 -m json.tool web/public/api/shield-status.json >/dev/null
           python3 -m json.tool web/public/api/quantum-call-status.json >/dev/null
-          python3 -m json.tool web/public/shield/app/test-vectors/zme1-v1.json >/dev/null

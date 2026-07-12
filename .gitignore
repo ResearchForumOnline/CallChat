@@ -43,6 +43,9 @@ zmath-private/
 shield-private/
 premium/
 entitlement-private/
+element/zmath-auto/
+web/public/shield/app/
+docs/private-cryptography/
 
 # Build outputs and binary packages
 node_modules/

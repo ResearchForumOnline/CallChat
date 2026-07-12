@@ -46,3 +46,5 @@ Security reports are useful for:
 ## Shield Boundary
 
 Public materials describe Shield behaviour, user flows, and licensing boundaries only. Real security must rely on strong cryptographic design and key handling, not on hiding source code alone.
+
+If private Shield/ZMath implementation, production configuration, or recovery material appears in this repository, report it privately and do not quote, mirror, fork, or attach the material to a public issue.

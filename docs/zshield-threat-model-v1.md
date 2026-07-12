@@ -3,8 +3,8 @@
 ## Protected Assets
 
 - File or vault-note plaintext.
-- Passphrase and optional pattern bytes.
-- Derived AES key.
+- User recovery material.
+- Derived content keys.
 - Integrity of authenticated payload and metadata.
 
 ## Adversaries Considered
@@ -18,9 +18,9 @@
 ## Guarantees
 
 - Plaintext is encrypted before the container is downloaded or attached.
-- AES-GCM detects modification to ciphertext or authenticated header fields.
-- Every production container receives a random salt and IV.
-- The hosted app does not submit passphrases, pattern bytes, or plaintext.
+- Authenticated encryption detects modification before content is opened.
+- Production containers use fresh per-item randomness.
+- The hosted app does not submit recovery material or plaintext to AI providers.
 - Current CallChat rooms use Matrix E2EE independently of ZShield.
 
 ## Non-Goals
@@ -38,11 +38,10 @@
 - Keep Matrix device verification enabled.
 - Refuse unencrypted rooms in Zero Bot.
 - Keep MatrixRTC, TURN, Synapse, and the ZShield app independently testable.
-- Publish reproducible test vectors without production keys or server details.
+- Keep premium test vectors, derivation details, and implementation source out of public distributions.
 
 ## Residual Risks
 
-PBKDF2 is intentionally expensive but remains vulnerable to offline guessing
-when users choose weak passphrases. Browser memory may retain plaintext until
-garbage collection. ZME1 v1 is a working profile, not an independently audited
-cryptographic product certification.
+Weak user secrets remain vulnerable to guessing. Browser memory may retain
+plaintext until garbage collection. Shield is not represented as independently
+certified cryptographic hardware or as a substitute for external review.
