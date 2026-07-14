@@ -1,4 +1,4 @@
-# Protected Rooms, Call Audio, and Signup Release
+# Automatic Protected Rooms, Call Audio, and Signup Release
 
 Date: 14 July 2026
 
@@ -9,15 +9,19 @@ configuration, or private research.
 
 ## Protected-room experience
 
-- Replaces independent per-browser protection profiles with an explicit,
-  room-scoped setup and approval flow carried inside the Matrix encrypted room.
-- Shows separate status for the Matrix room, Matrix identity, local recovery
-  vault, and optional ZMath room key so users can see which layer needs action.
-- Gives a new browser a clear **Request protected access** action and gives an
-  existing key holder an explicit approval step.
-- Keeps protected transport envelopes out of the normal timeline, including
-  replies and recycled timeline items, and shows a recovery action when the
-  room key is unavailable.
+- Replaces independent per-browser protection profiles with room-scoped
+  profiles coordinated inside the Matrix-encrypted conversation.
+- Makes protected-chat setup and matching-profile synchronization automatic
+  for ordinary use. Layer status, diagnostics, and manual recovery remain
+  available under Advanced options.
+- Verifies each protected message with a local encrypt-and-open round trip
+  before the client allows it to leave the composer.
+- Keeps protected transport and synchronization envelopes out of the normal
+  timeline, including replies and recycled timeline items.
+- Selects the current message in a reply instead of accidentally rendering a
+  quoted older envelope.
+- Collapses repeated notices for unavailable legacy history into one clear
+  summary while new matching messages continue to open normally.
 - Binds additional protection to the room profile. A profile from another room
   or an independently generated legacy profile cannot silently open it.
 
@@ -58,6 +62,9 @@ above.
   character password cases.
 - Passed protected-message, room-approval, file-container, and media-key
   contract checks against both local and hosted assets.
+- Passed an isolated two-browser synchronization check covering automatic
+  request, encrypted approval, profile installation, reply handling, draft
+  preservation, reload persistence, and plaintext rendering.
 - Verified the hosted release manifest, security headers, service health,
   source-map exclusion, bot-room replies, mobile layout, and the two-copy
   recovery policy.
