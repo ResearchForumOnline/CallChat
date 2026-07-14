@@ -24,3 +24,16 @@ Call quality depends on:
 - TURN availability.
 - Device microphone/camera permissions.
 - Server bandwidth.
+
+## Hosted CallChat Permission Flow
+
+The hosted CallChat client keeps media permissions independent:
+
+1. Joining requests microphone access.
+2. The camera remains off until the user selects **Start video**.
+3. Camera access is then requested separately.
+4. Safari users may need to select **Enable sound** once when the browser
+   pauses incoming audio under its autoplay policy.
+
+Declining camera access does not disable the voice path. Screen sharing remains
+a separate, explicit action and browser permission.

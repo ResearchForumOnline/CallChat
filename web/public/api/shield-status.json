@@ -7,16 +7,13 @@
     "description": "Standard Matrix-compatible messaging stays free on CallChat."
   },
   "hosted_callchat_shield": {
-    "status": "automatic_element_integration",
+    "status": "licensed_hosted_feature",
     "price_usd_month": 0,
     "scope": "Active hosted callchat.org accounts",
-    "user_experience": "After one local unlock with a passphrase and exact pattern image, the hosted Element client automatically protects composer messages and selected attachments before send and opens matching incoming messages while unlocked.",
-    "profile": "ZMATH-PBKDF2-HKDF-AESGCM-2",
-    "factor_handling": "The image may be remembered only as an AES-GCM encrypted local device record. The passphrase remains session-only and is never stored.",
-    "compatibility": "Legacy ZSHIELD-PBKDF2-AESGCM-1 containers remain readable. Matrix-only sending is an explicit user choice.",
-    "recipient_requirement": "Recipients need the same passphrase and exact pattern image for the additional ZMath layer.",
-    "workspace": "https://callchat.org/shield/app/",
-    "public_boundary": "The working MVP uses reviewable standard Web Crypto primitives. Premium policy, managed recovery, and private ZMath research remain separate."
+    "user_experience": "Approved hosted accounts can use the licensed Shield workflow for selected protected content.",
+    "compatibility": "Standard Matrix messaging remains available independently of the licensed Shield module.",
+    "workspace": "https://callchat.org/shield/",
+    "public_boundary": "Premium browser implementation, recovery logic, policy controls, entitlement code, and private ZMath research are not distributed in the community repository."
   },
   "self_hosted_zmath_shield_license": {
     "status": "founding_pilot",
@@ -24,8 +21,8 @@
     "price_usd_year": 550,
     "scope": "One approved self-hosted CallChat-compatible deployment on one public server IP with unlimited users",
     "includes": [
-      "ZMath Auto hosted Element integration",
-      "ZME1 protected-file workspace",
+      "Licensed hosted-client Shield integration",
+      "Protected-file workflow",
       "vault notes",
       "owner-controlled MatrixRTC and Q Call posture",
       "pilot entitlement and deployment review",
@@ -37,7 +34,7 @@
   "payment_link": "https://www.paypal.com/paypalme/ob1whv",
   "security_boundary": [
     "No plaintext files in this public status endpoint.",
-    "No Shield passwords, pattern material, derived keys, policy bearer secrets, or private ZMath source are published here.",
-    "The hosted client performs ZMath envelope encryption locally in the browser; private research and server credentials remain outside the public tree."
+    "No recovery material, derived keys, policy bearer secrets, or private ZMath source are published here.",
+    "Private implementation, research, entitlements, and server credentials remain outside the public tree."
   ]
 }

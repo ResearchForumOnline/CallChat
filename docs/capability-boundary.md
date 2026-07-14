@@ -9,13 +9,10 @@ badges.
 - Matrix-compatible rooms and encrypted messaging.
 - Voice and video through WebRTC with DTLS-SRTP and configured TURN support.
 - A CallChat-branded web client based on maintained Element Web source.
-- Local ZME1 message and file protection using the documented Web Crypto
-  profile: PBKDF2-SHA-256 and AES-256-GCM.
-- ZMath Auto integration that protects selected composer text and attachments
-  locally after the user unlocks it with the required factors.
-- An optional IonQ hardware-linked `.zqf` factor that is mixed into ZShield
-  content keys and the ZMath call media root. Missing or incorrect factors fail
-  closed; simulator output cannot activate the hardware profile.
+- A licensed Shield module for local protected-content workflows on approved
+  hosted or self-hosted deployments.
+- Optional licensed quantum-service workflows with an explicit boundary between
+  classical content protection and external provider evidence.
 - CAPTCHA-protected Matrix registration, a restricted E2EE Matrix bot example,
   public status schemas, and self-hosting templates.
 
@@ -40,7 +37,8 @@ Roadmap items are not presented as deployed cryptographic protection.
 - Current voice or video packets are quantum encrypted.
 - The IonQ integration is quantum key distribution, quantum cryptography, or a
   certified quantum random-number generator.
-- IonQ receives or stores the local nonce, final `.zqf` factor, or user keys.
+- External quantum or AI providers receive user content, Matrix keys, recovery
+  material, or final local factors.
 - Any encryption system is unbreakable, quantum-proof forever, or a substitute
   for independent security review.
 - A sample interface badge proves the state of a real account or device.

@@ -8,12 +8,10 @@ to the normal Matrix encrypted-file path.
 Original document
         |
         v
-ZMath user factors
-(passphrase + exact pattern)
+Licensed local Shield protection
         |
         v
-Authenticated AES-256-GCM ZME1 container
-filename.docx.zme1
+Authenticated protected container
         |
         v
 Matrix A256CTR encrypted attachment
@@ -27,8 +25,8 @@ CallChat infrastructure receives encrypted payloads
 
 ## What the layers do
 
-1. The CallChat client uses the user's ZMath factors to create an authenticated
-   `.zme1` container before upload.
+1. The licensed CallChat client creates an authenticated protected container
+   before upload.
 2. Matrix encrypts that container as an attachment. In the current Matrix file
    event format, this attachment layer is identified as `A256CTR`.
 3. The attachment reference and file details are carried inside a
@@ -36,16 +34,16 @@ CallChat infrastructure receives encrypted payloads
 4. The CallChat homeserver and media service receive the Matrix-encrypted
    payload rather than the original document bytes in this protected path.
 
-Successful recovery requires the Matrix room encryption context and the exact
-ZMath factors used for the ZME1 container. Changing the authenticated container
-causes ZME1 verification to fail instead of returning modified plaintext.
+Successful recovery requires the Matrix room context and the separately held
+Shield recovery material. Modified protected content must fail authentication
+instead of returning altered plaintext.
 
 ## Security boundary
 
 - The extra ZME1 layer applies only when ZMath protection is enabled and
   unlocked. Matrix-only mode does not create this additional container.
-- The passphrase, pattern, and recovered plaintext are intended to stay in the
-  client-side protection flow.
+- Recovery material and plaintext are intended to stay in the licensed local
+  protection flow.
 - Service infrastructure may still process operational metadata required to
   deliver the service, including account and room routing, timestamps, traffic
   timing, and encrypted payload sizes.

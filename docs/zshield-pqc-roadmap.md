@@ -1,19 +1,17 @@
 # ZShield Post-Quantum Roadmap
 
-The production claim today is deliberately narrow: ZME1 v1 uses AES-256-GCM
-for local authenticated payload encryption. It is not labelled post-quantum
-public-key cryptography.
+The production claim today is deliberately narrow: Shield uses established
+classical authenticated encryption. It is not labelled post-quantum public-key
+cryptography.
 
-## Proposed v2 Research Profile
+## Research direction
 
-1. Generate a random 256-bit content-encryption key per payload.
-2. Keep AES-256-GCM for the payload.
-3. Wrap the content key with a hybrid classical plus NIST ML-KEM mechanism.
-4. Bind recipient identifiers, algorithms, encapsulations, and key identifiers
-   into authenticated metadata.
-5. Optionally sign evidence manifests with ML-DSA or SLH-DSA after a separate
-   identity and key-lifecycle review.
-6. Preserve explicit algorithm identifiers and fail closed without downgrade.
+- Evaluate standardized NIST post-quantum key establishment and signatures.
+- Preserve cryptographic agility, explicit versioning, and downgrade resistance.
+- Keep identity, key lifecycle, backup, recovery, and revocation inside the
+  review scope rather than treating an algorithm swap as a complete product.
+- Keep experimental profiles, private test vectors, and implementation details
+  outside the public community repository.
 
 ## Release Gates
 

@@ -29,3 +29,7 @@ The safest public distribution model is:
 ## Shield Boundary
 
 CallChat Shield / ZMath premium implementation code is not included here. Public docs may describe behaviour and integration points, but private source, entitlement internals, and deployment secrets must stay outside public repositories.
+
+The MIT license in this repository applies only to files actually distributed in this repository. It does not grant rights to separately supplied Shield/ZMath modules, hosted production assets, private research, trademarks, customer configuration, or commercial entitlement systems.
+
+CallChat's modified Element Web and Element Call repositories retain their AGPL/GPL or commercial-license notices. Corresponding source required by those licenses must remain available. Code published there should not be treated as confidential or as a trade secret.
