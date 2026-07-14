@@ -18,10 +18,21 @@ configuration, or private research.
   When an older profile is no longer available from any active room device,
   CallChat can establish fresh protection for new traffic without discarding
   the draft or repeatedly asking the sender to retry.
+- Keeps the authenticated profiles a trusted device has learned for a room,
+  allowing newly established traffic and later-recovered history to coexist
+  instead of repeatedly replacing one another.
+- Preserves an in-progress device access request across a normal page reload
+  where the browser supports protected local storage, and serializes the
+  short synchronization operations so they cannot overwrite a user's draft.
+- Confirms the visible signed-in conversation before every protected send and
+  repairs stale room navigation when the active room can be identified safely.
 - Verifies each protected message with a local encrypt-and-open round trip
   before the client allows it to leave the composer.
 - Keeps protected transport and synchronization envelopes out of the normal
   timeline, including replies and recycled timeline items.
+- Keeps one visible plaintext result for each successfully opened event, even
+  when the timeline presents the same event through nested display layers.
+  Hidden transport content remains hidden after a full reload.
 - Selects the current message in a reply instead of accidentally rendering a
   quoted older envelope.
 - Collapses repeated notices for unavailable legacy history into one clear
@@ -43,6 +54,9 @@ claim to recover historical ciphertext.
 - When the optional protected-room layer is active, call media keys remain
   bound to that room profile without sending the profile secret to the media
   service.
+- Holds a protected call at the readiness step when the browser knows it does
+  not yet have the room's current authenticated profile, preventing a call
+  from starting with a mismatched additional factor.
 
 CallChat does not describe this WebRTC media path as quantum encryption. The
 live security claim is the deployed, testable encrypted-media path stated
@@ -77,6 +91,11 @@ above.
 - Verified the hosted release manifest, security headers, service health,
   source-map exclusion, bot-room replies, mobile layout, and the two-copy
   recovery policy.
+- Verified a newly protected production message appeared once as plaintext,
+  remained readable after a full page reload, and left no pending protection
+  state or visible transport envelope.
+- Verified the pinned `2026.07.14.14` hosted client, its release-integrity lock,
+  and the synchronized `/app/` and `/element/` protection assets.
 
 An audible two-person call remains the final device-level confirmation because
 speaker routing and browser permissions belong to each participant's device.
