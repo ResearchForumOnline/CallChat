@@ -88,7 +88,7 @@ Standard Matrix chat can be self-hosted from this repo. Licensed Shield/ZMath au
 - Q-Calls use the deployed MatrixRTC/LiveKit media stack. CallChat does not claim that current audio or video is quantum encrypted.
 - Optional quantum-service features are separately bounded evidence or licensed-factor workflows, not QKD or a replacement for standardized post-quantum cryptography.
 
-Public limits and disclosure rules: [capability boundary](docs/capability-boundary.md), [Shield boundary](docs/zmath-boundary.md), [threat model](docs/zshield-threat-model-v1.md), [12 July 2026 IP-boundary release](docs/public-release-20260712.md), and [13 July 2026 hosted reliability release](docs/public-release-20260713.md).
+Public limits and disclosure rules: [capability boundary](docs/capability-boundary.md), [Shield boundary](docs/zmath-boundary.md), [threat model](docs/zshield-threat-model-v1.md), [12 July 2026 IP-boundary release](docs/public-release-20260712.md), [13 July 2026 hosted reliability release](docs/public-release-20260713.md), and [14 July 2026 protected rooms and call-audio release](docs/public-release-20260714.md).
 
 ## Layered File Protection
 
