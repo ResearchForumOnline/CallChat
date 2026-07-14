@@ -14,6 +14,10 @@ configuration, or private research.
 - Makes protected-chat setup and matching-profile synchronization automatic
   for ordinary use. Layer status, diagnostics, and manual recovery remain
   available under Advanced options.
+- Recovers automatically from short sign-in or room-navigation timing gaps.
+  When an older profile is no longer available from any active room device,
+  CallChat can establish fresh protection for new traffic without discarding
+  the draft or repeatedly asking the sender to retry.
 - Verifies each protected message with a local encrypt-and-open round trip
   before the client allows it to leave the composer.
 - Keeps protected transport and synchronization envelopes out of the normal
@@ -27,6 +31,8 @@ configuration, or private research.
 
 Existing protected messages still require the profile that created them. This
 release does not weaken or bypass that rule when an older profile is missing.
+Starting fresh protection affects new traffic only and does not rewrite or
+claim to recover historical ciphertext.
 
 ## Calls
 
@@ -65,6 +71,9 @@ above.
 - Passed an isolated two-browser synchronization check covering automatic
   request, encrypted approval, profile installation, reply handling, draft
   preservation, reload persistence, and plaintext rendering.
+- Passed an unavailable-profile recovery check covering delayed account
+  readiness, one synchronization request, one protected send, local opening,
+  and an immediate follow-up without another request.
 - Verified the hosted release manifest, security headers, service health,
   source-map exclusion, bot-room replies, mobile layout, and the two-copy
   recovery policy.
