@@ -1,11 +1,11 @@
-# Automatic Protected Rooms, Call Audio, and Signup Release
+# Automatic Protected Rooms, Calls, Signup, and Help Release
 
 Date: 14 July 2026
 
 This hosted release improves protected-room onboarding, remote call-audio
-recovery, account creation, and narrow-screen usability. It publishes verified
-behaviour and limitations, not licensed Shield/ZMath source, production
-configuration, or private research.
+recovery, account creation, task-based help, and narrow-screen usability. It
+publishes verified behaviour and limitations, not licensed Shield/ZMath
+source, production configuration, or private research.
 
 ## Protected-room experience
 
@@ -74,6 +74,25 @@ above.
 - Keeps the signup form and active chat panel usable without horizontal
   overflow on narrow mobile screens.
 
+## Help and Shield interface
+
+- Rebuilds the Help center around real tasks: the first three minutes, Shield
+  status, a new phone or browser, common faults, calls, and account recovery.
+- Adds searchable questions and topic filters so users can search for the
+  words they see on screen instead of learning internal terminology first.
+- Explains the Matrix room, Matrix identity, local vault, and protected-chat
+  states in plain language, with a clear everyday path that requires no manual
+  Shield key steps.
+- Keeps the normal Shield panel focused on current status and direct help.
+  Legacy recovery, optional factors, reset controls, diagnostics, and technical
+  references remain grouped under progressively disclosed Advanced options.
+- Restores the branded hosted-app entrypoint and verifies that its referenced
+  compiled assets exist before release. The same gate follows the active entry
+  bundle when checking the protected call bridge, preventing a stale or missing
+  bundle reference from producing an empty client.
+- Keeps the compatibility client available while directing the primary hosted
+  experience to the branded CallChat Shield application.
+
 ## Validation
 
 - Passed the focused call-audio component suite (17 tests), type checking,
@@ -94,7 +113,10 @@ above.
 - Verified a newly protected production message appeared once as plaintext,
   remained readable after a full page reload, and left no pending protection
   state or visible transport envelope.
-- Verified the pinned `2026.07.14.14` hosted client, its release-integrity lock,
+- Verified Help search and filters and checked Help, manuals, guide, hosted app,
+  and Shield layouts at 360, 390, 768, and 1440 pixel widths without page
+  overflow or off-screen controls.
+- Verified the pinned `2026.07.14.15` hosted client, its release-integrity lock,
   and the synchronized `/app/` and `/element/` protection assets.
 
 An audible two-person call remains the final device-level confirmation because
